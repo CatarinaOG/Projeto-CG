@@ -1,4 +1,4 @@
-#ifdef __APPLE__
+﻿#ifdef __APPLE__
 #include <GLUT/glut.h>
 #else
 #include <stdlib.h>
@@ -9,35 +9,45 @@
 #endif
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <vector>
+#include <fstream>
+#include <iostream>
 #include "tinyxml.h"
-
+using namespace std;
 
 GLdouble x1, t1, z1, x2, y2, z2, x3, y3, z3;
 char* filename;
 
+struct vertex {
+    float x, y, z;
+};
+
+vector<vertex> vertices;
+
+
 void changeSize(int w, int h) {
 
-	// Prevent a divide by zero, when window is too short
-	// (you cant make a window with zero width).
-	if(h == 0)
-		h = 1;
+    // Prevent a divide by zero, when window is too short
+    // (you cant make a window with zero width).
+    if (h == 0)
+        h = 1;
 
-	// compute window's aspect ratio 
-	float ratio = w * 1.0 / h;
+    // compute window's aspect ratio 
+    float ratio = w * 1.0 / h;
 
-	// Set the projection matrix as current
-	glMatrixMode(GL_PROJECTION);
-	// Load Identity Matrix
-	glLoadIdentity();
-	
-	// Set the viewport to be the entire window
+    // Set the projection matrix as current
+    glMatrixMode(GL_PROJECTION);
+    // Load Identity Matrix
+    glLoadIdentity();
+
+    // Set the viewport to be the entire window
     glViewport(0, 0, w, h);
 
-	// Set perspective
-	gluPerspective(45.0f ,ratio, 1.0f ,1000.0f);
+    // Set perspective
+    gluPerspective(45.0f, ratio, 1.0f, 1000.0f);
 
-	// return to the model view matrix mode
-	glMatrixMode(GL_MODELVIEW);
+    // return to the model view matrix mode
+    glMatrixMode(GL_MODELVIEW);
 }
 
 void drawCone(float radius, float height, int cone_slices, int cone_stacks) {
@@ -136,24 +146,85 @@ void drawCone(float radius, float height, int cone_slices, int cone_stacks) {
     glEnd();
 }
 
+void tokenize(std::string const& str, const char delim,
+    std::vector<std::string>& out)
+{
+    size_t start;
+    size_t end = 0;
+
+    while ((start = str.find_first_not_of(delim, end)) != std::string::npos)
+    {
+        end = str.find(delim, start);
+        out.push_back(str.substr(start, end - start));
+    }
+}
+
+
+std::vector<vertex> parser(const char* filename) {
+
+    string line;
+    ifstream myfile(filename);
+
+    const char delimiter = ';';
+    std::vector<std::string> out;
+
+    if (myfile.is_open())
+    {
+        while (getline(myfile, line))
+        {
+            tokenize(line, delimiter, out);
+        }
+        myfile.close();
+    }
+
+    else std::cout << "Unable to open file";
+
+    vector<vertex> vertices;
+
+    for (std::size_t i = 0; i < out.size(); i += 3) {
+        vertex v1 = {
+                std::stof(out[i]),
+                std::stof(out[i + 1]),
+                std::stof(out[i + 2])
+        };
+        vertices.push_back(v1);
+    }
+    return vertices;
+}
+
+
+void draw(vector<vertex> vertices) {
+    int drawn = 0;
+    glBegin(GL_TRIANGLES);
+    for (std::size_t i = 0; i < vertices.size(); i += 3) {
+        glVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);
+        glVertex3f(vertices[i + 1].x, vertices[i + 1].y, vertices[i + 1].z);
+        glVertex3f(vertices[i + 2].x, vertices[i + 2].y, vertices[i + 2].z);
+        printf("%f, %f, %f\n", vertices[i], vertices[i + 1], vertices[i + 2]);
+        drawn++;
+    }
+    cout << "Número de triangulos desenhados: " << drawn;
+    glEnd();
+}
+
 void readXML() {
 
-	TiXmlDocument doc(filename);
-	bool loadOkay = doc.LoadFile();
-	
-	if (loadOkay) {
+    TiXmlDocument doc(filename);
+    bool loadOkay = doc.LoadFile();
 
-		TiXmlElement* l_pRootElement = doc.FirstChildElement("world");
+    if (loadOkay) {
 
-		if (l_pRootElement != NULL){
+        TiXmlElement* l_pRootElement = doc.FirstChildElement("world");
 
-			TiXmlElement* l_camera = l_pRootElement->FirstChildElement("camera");
+        if (l_pRootElement != NULL) {
 
-			if (NULL != l_camera)
-			{
-				TiXmlElement* l_position = l_camera->FirstChildElement("position");
+            TiXmlElement* l_camera = l_pRootElement->FirstChildElement("camera");
 
-			    x1 = std::stod(l_position->Attribute("x"));
+            if (NULL != l_camera)
+            {
+                TiXmlElement* l_position = l_camera->FirstChildElement("position");
+
+                x1 = std::stod(l_position->Attribute("x"));
                 z1 = std::stod(l_position->Attribute("z"));
                 t1 = std::stod(l_position->Attribute("y"));
 
@@ -169,7 +240,7 @@ void readXML() {
                 x3 = std::stod(l_up->Attribute("x"));
                 y3 = std::stod(l_up->Attribute("y"));
                 z3 = std::stod(l_up->Attribute("z"));
-			}
+            }
 
             TiXmlElement* l_group = l_pRootElement->FirstChildElement("group");
 
@@ -183,7 +254,8 @@ void readXML() {
 
                     while (l_model) {
 
-                        printf("%s\n",l_model->Attribute("file")); //aqui vai função para gerar primitiva
+                        vertices = parser(l_model->Attribute("file"));
+                        cout << l_model->Attribute("file");
                         l_model = l_model->NextSiblingElement("model");
                     }
                 }
@@ -191,11 +263,11 @@ void readXML() {
                     printf("models null");
                 }
             }
-		}
-	}
-	else {
-		printf("Ficheiro não carregado");
-	}
+        }
+    }
+    else {
+        printf("Ficheiro n�o carregado");
+    }
 }
 
 void renderScene(void) {
@@ -209,36 +281,59 @@ void renderScene(void) {
         x2, y2, z2,
         x3, y3, z3);
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    drawCone(1, 2, 4, 3);
+    glBegin(GL_LINES);
+    // X axis in red
+    glColor3f(1.0f, 0.0f, 0.0f);
+    glVertex3f(-100.0f, 0.0f, 0.0f);
+    glVertex3f(100.0f, 0.0f, 0.0f);
+    // Y Axis in Green
+    glColor3f(0.0f, 1.0f, 0.0f);
+    glVertex3f(0.0f, -100.0f, 0.0f);
+    glVertex3f(0.0f, 100.0f, 0.0f);
+    // Z Axis in Blue
+    glColor3f(0.0f, 0.0f, 1.0f);
+    glVertex3f(0.0f, 0.0f, -100.0f);
+    glVertex3f(0.0f, 0.0f, 100.0f);
+    glEnd();
+
+    glBegin(GL_TRIANGLES);
+    for (std::size_t i = 0; i < vertices.size(); i += 3) {
+        glVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);
+        glVertex3f(vertices[i + 1].x, vertices[i + 1].y, vertices[i + 1].z);
+        glVertex3f(vertices[i + 2].x, vertices[i + 2].y, vertices[i + 2].z);
+        printf("%f, %f, %f\n", vertices[i], vertices[i + 1], vertices[i + 2]);
+    }
+    glEnd();
+
 
     // End of frame
     glutSwapBuffers();
 }
 
 
-int main(int argc, char **argv) {
+int main(int argc, char** argv) {
 
-// init GLUT and the window
-	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DEPTH|GLUT_DOUBLE|GLUT_RGBA);
-	glutInitWindowPosition(100,100);
-	glutInitWindowSize(800,800);
-	glutCreateWindow("CG@DI-UM");
+    // init GLUT and the window
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+    glutInitWindowPosition(100, 100);
+    glutInitWindowSize(800, 800);
+    glutCreateWindow("CG@DI-UM");
     filename = argv[1];
     readXML();
 
-// Required callback registry 
-	glutDisplayFunc(renderScene);
-	glutReshapeFunc(changeSize);
-	
-//  OpenGL settings
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
+    // Required callback registry 
+    glutDisplayFunc(renderScene);
+    glutReshapeFunc(changeSize);
 
-	
-// enter GLUT's main cycle
-	glutMainLoop();
-	
-	return 1;
+    //  OpenGL settings
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    // enter GLUT's main cycle
+    glutMainLoop();
+
+    return 1;
 }

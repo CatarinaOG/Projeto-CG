@@ -8,78 +8,81 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <string.h>
+#include <vector>
+
+using namespace std;
 
 char** arguments;
 int argumentsLen;
 
 void changeSize(int w, int h) {
 
-	// Prevent a divide by zero, when window is too short
-	// (you cant make a window with zero width).
-	if (h == 0)
-		h = 1;
+    // Prevent a divide by zero, when window is too short
+    // (you cant make a window with zero width).
+    if (h == 0)
+        h = 1;
 
-	// compute window's aspect ratio 
-	float ratio = w * 1.0 / h;
+    // compute window's aspect ratio 
+    float ratio = w * 1.0 / h;
 
-	// Set the projection matrix as current
-	glMatrixMode(GL_PROJECTION);
-	// Load Identity Matrix
-	glLoadIdentity();
+    // Set the projection matrix as current
+    glMatrixMode(GL_PROJECTION);
+    // Load Identity Matrix
+    glLoadIdentity();
 
-	// Set the viewport to be the entire window
-	glViewport(0, 0, w, h);
+    // Set the viewport to be the entire window
+    glViewport(0, 0, w, h);
 
-	// Set perspective
-	gluPerspective(45.0f, ratio, 1.0f, 1000.0f);
+    // Set perspective
+    gluPerspective(45.0f, ratio, 1.0f, 1000.0f);
 
-	// return to the model view matrix mode
-	glMatrixMode(GL_MODELVIEW);
+    // return to the model view matrix mode
+    glMatrixMode(GL_MODELVIEW);
 }
 
 
 
 void drawPlane(int length, int divisions, char* fileName) {
 
-	std::ofstream MyFile(fileName);
+    std::ofstream MyFile(fileName);
 
-	glBegin(GL_TRIANGLES);
+    glBegin(GL_TRIANGLES);
 
-	float size = static_cast<float>(length) / divisions;
-	float startx = -(length / static_cast<float>(2));
-	float startxFixo = startx;
-	float startz = length / static_cast<float>(2);
-	float startzFixo = startz;
+    float size = static_cast<float>(length) / divisions;
+    float startx = -(length / static_cast<float>(2));
+    float startxFixo = startx;
+    float startz = length / static_cast<float>(2);
+    float startzFixo = startz;
 
 
-	for (int j = 0; j < divisions; j++) {
+    for (int j = 0; j < divisions; j++) {
 
-		startz = startzFixo - (j * size);
+        startz = startzFixo - (j * size);
 
-		for (int i = 0; i < divisions; i++) {
+        for (int i = 0; i < divisions; i++) {
 
-			startx = startxFixo + (i * size);
+            startx = startxFixo + (i * size);
 
-			glVertex3f(startx, 0, startz);
-			glVertex3f(startx + size, 0, startz);
-			glVertex3f(startx + size, 0, startz - size);
+            glVertex3f(startx, 0, startz);
+            glVertex3f(startx + size, 0, startz);
+            glVertex3f(startx + size, 0, startz - size);
 
-			MyFile << startx << ";" << 0 << ";" << startz << ";";
-			MyFile << startx + size << ";" << 0 << ";" << startz << ";";
-			MyFile << startx + size << ";" << 0 << ";" << startz - size << std::endl;
+            MyFile << startx << ";" << 0 << ";" << startz << ";";
+            MyFile << startx + size << ";" << 0 << ";" << startz << ";";
+            MyFile << startx + size << ";" << 0 << ";" << startz - size << std::endl;
 
-			glVertex3f(startx, 0, startz);
-			glVertex3f(startx + size, 0, startz - size);
-			glVertex3f(startx, 0, startz - size);
+            glVertex3f(startx, 0, startz);
+            glVertex3f(startx + size, 0, startz - size);
+            glVertex3f(startx, 0, startz - size);
 
-			MyFile << startx << ";" << 0 << ";" << startz << ";";
-			MyFile << startx + size << ";" << 0 << ";" << startz - size << ";";
-			MyFile << startx << ";" << 0 << ";" << startz - size << std::endl;
-		}
-	}
-	glEnd();
+            MyFile << startx << ";" << 0 << ";" << startz << ";";
+            MyFile << startx + size << ";" << 0 << ";" << startz - size << ";";
+            MyFile << startx << ";" << 0 << ";" << startz - size << std::endl;
+        }
+    }
+    glEnd();
 
-	MyFile.close();
+    MyFile.close();
 }
 
 void drawCube(int length, int divisions, char* fileName) {
@@ -177,7 +180,7 @@ void drawCube(int length, int divisions, char* fileName) {
 
             MyFile << startx << ";" << starty << ";" << startz << ";";
             MyFile << startx + size << ";" << starty << ";" << startz << ";";
-            MyFile << startx << ";" << starty << ";" << startz << std::endl;
+            MyFile << startx << ";" << starty + size << ";" << startz << std::endl;
 
             glVertex3f(startx, starty + size, startz);
             glVertex3f(startx + size, starty, startz);
@@ -388,104 +391,175 @@ void drawCone(float radius, float height, int cone_slices, int cone_stacks, char
     glEnd();
 }
 
+struct vertex {
+    float x, y, z;
+};
+
+vertex assignCoords(float radius, int currStack, int currSlice, float i_beta, float d_beta, float d_alpha) {
+    vertex v = {
+            radius * cos(i_beta - (currStack * d_beta)) * sin(currSlice * d_alpha),
+            radius * sin(i_beta - (currStack * d_beta)),
+            radius * cos(i_beta - (currStack * d_beta)) * cos(currSlice * d_alpha),
+    };
+    return v;
+}
+
+std::vector<vertex> sphereCoords(float radius, int slices, int stacks, char* filename) {
+
+    std::ofstream Myfile(filename);
+
+    vector<vertex> vertices;
+
+    float d_alpha = (float)2 * M_PI / slices;
+    float d_beta = (float)M_PI / stacks;
+
+    float i_alpha = 0.0f;
+    float i_beta = M_PI / 2;
+
+    float x, y, z;
+
+    for (int currStack = 0; currStack < stacks; currStack++) {
+        //int currStack = 3;
+        for (int currSlice = 0; currSlice < slices; currSlice++) {
+            vertex v1 = assignCoords(radius, currStack, currSlice, i_beta, d_beta, d_alpha);
+            vertex v2 = assignCoords(radius, currStack + 1, currSlice, i_beta, d_beta, d_alpha);
+            vertex v3 = assignCoords(radius, currStack + 1, currSlice + 1, i_beta, d_beta, d_alpha);
+
+            vertex v4 = assignCoords(radius, currStack, currSlice + 1, i_beta, d_beta, d_alpha);
+
+            //1º triangulo
+
+            Myfile << v1.x << ";" << v1.y << ";" << v1.z << ";";
+            Myfile << v2.x << ";" << v2.y << ";" << v2.z << ";";
+            Myfile << v3.x << ";" << v3.y << ";" << v3.z << std::endl;
+
+            //2º triangulo
+
+            Myfile << v1.x << ";" << v1.y << ";" << v1.z << ";";
+            Myfile << v3.x << ";" << v3.y << ";" << v3.z << ";";
+            Myfile << v4.x << ";" << v4.y << ";" << v4.z << std::endl;
+
+            vertices.push_back(v1);
+            vertices.push_back(v2);
+            vertices.push_back(v3);
+            vertices.push_back(v1);
+            vertices.push_back(v3);
+            vertices.push_back(v4);
+        }
+    }
+    Myfile.close();
+
+    return vertices;
+}
+
+void drawSphere(vector<vertex> vertices) {
+
+    glBegin(GL_TRIANGLES);
+    for (std::size_t i = 0; i < vertices.size(); i += 3) {
+        glVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);
+        glVertex3f(vertices[i + 1].x, vertices[i + 1].y, vertices[i + 1].z);
+        glVertex3f(vertices[i + 2].x, vertices[i + 2].y, vertices[i + 2].z);
+    }
+    glEnd();
+}
 
 
 void choosePrimitive() {
-	if (strcmp(arguments[1], "sphere") == 0 && argumentsLen >= 4) {
-		//vector<vertex> vertices = sphereCoords(3.0, slices, stacks, "sphere.3d");
-		//drawSphere(vertices);
-	}
+    if (strcmp(arguments[1], "sphere") == 0 && argumentsLen >= 4) {
+        vector<vertex> vertices = sphereCoords(atoi(arguments[2]), atoi(arguments[3]), atoi(arguments[4]), arguments[5]);
+        drawSphere(vertices);
+    }
 
-	if (strcmp(arguments[1], "box") == 0 && argumentsLen >= 5) {
-		drawCube(atoi(arguments[2]), atoi(arguments[3]), arguments[4]);
-	}
+    if (strcmp(arguments[1], "box") == 0 && argumentsLen >= 5) {
+        drawCube(atoi(arguments[2]), atoi(arguments[3]), arguments[4]);
+    }
 
-	if (strcmp(arguments[1], "cone") == 0 && argumentsLen >= 5) {
-		drawCone(atoi(arguments[2]), atoi(arguments[3]), atoi(arguments[4]), atoi(arguments[5]), arguments[6]);
-	}
+    if (strcmp(arguments[1], "cone") == 0 && argumentsLen >= 5) {
+        drawCone(atoi(arguments[2]), atoi(arguments[3]), atoi(arguments[4]), atoi(arguments[5]), arguments[6]);
+    }
 
-	if (strcmp(arguments[1], "plane") == 0 && argumentsLen >= 5) {
-		drawPlane(atoi(arguments[2]), atoi(arguments[3]), arguments[4]);
-	}
+    if (strcmp(arguments[1], "plane") == 0 && argumentsLen >= 5) {
+        drawPlane(atoi(arguments[2]), atoi(arguments[3]), arguments[4]);
+    }
 }
 
 void renderScene(void) {
 
-	// clear buffers
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // clear buffers
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	// set the camera
-	glLoadIdentity();
-	gluLookAt(5.0, 5.0, 5.0,
-		0.0, 0.0, 0.0,
-		0.0f, 1.0f, 0.0f);
+    // set the camera
+    glLoadIdentity();
+    gluLookAt(5.0, 5.0, 5.0,
+        0.0, 0.0, 0.0,
+        0.0f, 1.0f, 0.0f);
 
-	glBegin(GL_LINES);
-	// X axis in red
-	glColor3f(1.0f, 0.0f, 0.0f);
-	glVertex3f(-100.0f, 0.0f, 0.0f);
-	glVertex3f(100.0f, 0.0f, 0.0f);
-	// Y Axis in Green
-	glColor3f(0.0f, 1.0f, 0.0f);
-	glVertex3f(0.0f, -100.0f, 0.0f);
-	glVertex3f(0.0f, 100.0f, 0.0f);
-	// Z Axis in Blue
-	glColor3f(0.0f, 0.0f, 1.0f);
-	glVertex3f(0.0f, 0.0f, -100.0f);
-	glVertex3f(0.0f, 0.0f, 100.0f);
-	glEnd();
+    glBegin(GL_LINES);
+    // X axis in red
+    glColor3f(1.0f, 0.0f, 0.0f);
+    glVertex3f(-100.0f, 0.0f, 0.0f);
+    glVertex3f(100.0f, 0.0f, 0.0f);
+    // Y Axis in Green
+    glColor3f(0.0f, 1.0f, 0.0f);
+    glVertex3f(0.0f, -100.0f, 0.0f);
+    glVertex3f(0.0f, 100.0f, 0.0f);
+    // Z Axis in Blue
+    glColor3f(0.0f, 0.0f, 1.0f);
+    glVertex3f(0.0f, 0.0f, -100.0f);
+    glVertex3f(0.0f, 0.0f, 100.0f);
+    glEnd();
 
-	// set the camera
-	glLoadIdentity();
-	gluLookAt(5.0, 5.0, 5.0,
-		0.0, 0.0, 0.0,
-		0.0f, 1.0f, 0.0f);
+    // set the camera
+    glLoadIdentity();
+    gluLookAt(5.0, 5.0, 5.0,
+        0.0, 0.0, 0.0,
+        0.0f, 1.0f, 0.0f);
 
-	// put the geometric transformations here
+    // put the geometric transformations here
 
 
 
-	// put drawing instructions here
+    // put drawing instructions here
 
-	choosePrimitive();
+    choosePrimitive();
 
-	//drawSphere(vertices);
+    //drawSphere(vertices);
 
-	//drawCone(2,5,3,4);
+    //drawCone(2,5,3,4);
 
-	// End of frame
-	glutSwapBuffers();
+    // End of frame
+    glutSwapBuffers();
 }
 
 int main(int argc, char** argv) {
 
-	arguments = argv;
-	argumentsLen = argc;
+    arguments = argv;
+    argumentsLen = argc;
 
-	// init GLUT and the window
-	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
-	glutInitWindowPosition(100, 100);
-	glutInitWindowSize(800, 800);
-	glutCreateWindow("CG@DI-UM");
+    // init GLUT and the window
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+    glutInitWindowPosition(100, 100);
+    glutInitWindowSize(800, 800);
+    glutCreateWindow("CG@DI-UM");
 
-	// Required callback registry
-	glutDisplayFunc(renderScene);
-	glutReshapeFunc(changeSize);
-
-
-	// put here the registration of the keyboard callbacks
-
-	//glutKeyboardFunc(function_name);
+    // Required callback registry
+    glutDisplayFunc(renderScene);
+    glutReshapeFunc(changeSize);
 
 
-	//  OpenGL settings
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    // put here the registration of the keyboard callbacks
 
-	// enter GLUT's main cycle
-	glutMainLoop();
+    //glutKeyboardFunc(function_name);
 
-	return 1;
+
+    //  OpenGL settings
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    // enter GLUT's main cycle
+    glutMainLoop();
+
+    return 1;
 }
