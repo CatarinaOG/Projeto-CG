@@ -15,7 +15,7 @@
 #include "tinyxml.h"
 using namespace std;
 
-GLdouble x1, t1, z1, x2, y2, z2, x3, y3, z3;
+GLdouble x1, t1, z1, x2, y2, z2, x3, y3, z3, fov, near, far;
 char* filename;
 
 struct vertex {
@@ -44,7 +44,7 @@ void changeSize(int w, int h) {
     glViewport(0, 0, w, h);
 
     // Set perspective
-    gluPerspective(45.0f, ratio, 1.0f, 1000.0f);
+    gluPerspective(fov, ratio, near, far);
 
     // return to the model view matrix mode
     glMatrixMode(GL_MODELVIEW);
@@ -160,7 +160,7 @@ void tokenize(std::string const& str, const char delim,
 }
 
 
-std::vector<vertex> parser(const char* filename) {
+ void parser(const char* filename) {
 
     string line;
     ifstream myfile(filename);
@@ -179,7 +179,6 @@ std::vector<vertex> parser(const char* filename) {
 
     else std::cout << "Unable to open file";
 
-    vector<vertex> vertices;
 
     for (std::size_t i = 0; i < out.size(); i += 3) {
         vertex v1 = {
@@ -189,7 +188,6 @@ std::vector<vertex> parser(const char* filename) {
         };
         vertices.push_back(v1);
     }
-    return vertices;
 }
 
 
@@ -228,7 +226,6 @@ void readXML() {
                 z1 = std::stod(l_position->Attribute("z"));
                 t1 = std::stod(l_position->Attribute("y"));
 
-
                 TiXmlElement* l_lookAt = l_camera->FirstChildElement("lookAt");
 
                 x2 = std::stod(l_lookAt->Attribute("x"));
@@ -240,6 +237,18 @@ void readXML() {
                 x3 = std::stod(l_up->Attribute("x"));
                 y3 = std::stod(l_up->Attribute("y"));
                 z3 = std::stod(l_up->Attribute("z"));
+
+
+                TiXmlElement* l_proj = l_camera->FirstChildElement("projection");
+
+                if (NULL != l_proj) {
+
+                    fov = std::stod(l_proj->Attribute("fov"));
+                    near = std::stod(l_proj->Attribute("near"));
+                    far = std::stod(l_proj->Attribute("far"));
+
+                }
+
             }
 
             TiXmlElement* l_group = l_pRootElement->FirstChildElement("group");
@@ -254,7 +263,7 @@ void readXML() {
 
                     while (l_model) {
 
-                        vertices = parser(l_model->Attribute("file"));
+                        parser(l_model->Attribute("file"));
                         cout << l_model->Attribute("file");
                         l_model = l_model->NextSiblingElement("model");
                     }
