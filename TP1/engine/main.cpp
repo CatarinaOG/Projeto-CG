@@ -16,6 +16,10 @@
 using namespace std;
 
 GLdouble x1, t1, z1, x2, y2, z2, x3, y3, z3, fov, near, far;
+float camX, camY, camZ;
+float alpha = 0.0f, beta = 0.0f, radius = 5.0f;
+
+
 char* filename;
 
 struct vertex {
@@ -24,8 +28,9 @@ struct vertex {
 
 vector<vertex> vertices;
 vector<float> transformations;
-vector<char*> models;
+vector<const char*> models;
 vector< TiXmlElement*> groupStack;
+
 
 /*
 
@@ -36,7 +41,49 @@ vector< TiXmlElement*> groupStack;
     4 -> pushMatrix
     5 -> popMatrix
 
+    6-> model
 */
+
+void spherical2Cartesian() {
+
+    camX = radius * cos(beta) * sin(alpha);
+    camY = radius * sin(beta);
+    camZ = radius * cos(beta) * cos(alpha);
+}
+
+
+
+
+void processSpecialKeys(int key, int xx, int yy){
+    switch(key){
+        case GLUT_KEY_RIGHT:
+            alpha -= 0.1;
+            break;
+        case GLUT_KEY_LEFT:
+            alpha += 0.1;
+            break;
+        case GLUT_KEY_UP:
+            beta += 0.1f;
+            if (beta > 1.5f)
+                beta = 1.5f;
+            break;
+        case GLUT_KEY_DOWN:
+            beta -= 0.1f;
+            if (beta < -1.5f)
+                beta = -1.5f;
+            break;
+        case GLUT_KEY_PAGE_DOWN:
+            radius -= 0.1f;
+            if(radius < 0.1f)
+                radius = 0.1f;
+            break;
+        case GLUT_KEY_PAGE_UP:
+            radius += 0.1f;
+            break;
+    }
+    spherical2Cartesian();
+    glutPostRedisplay();
+}
 
 
 
@@ -175,6 +222,7 @@ void tokenize(std::string const& str, const char delim,
 }
 
 
+// parse de ficheiros .3d
 void parser(const char* filename) {
 
     string line;
@@ -206,18 +254,77 @@ void parser(const char* filename) {
 }
 
 
-void draw(vector<vertex> vertices) {
-    int drawn = 0;
+void drawPrimitive(){
+    glColor3f(1.0f, 1.0f, 1.0f);
     glBegin(GL_TRIANGLES);
     for (std::size_t i = 0; i < vertices.size(); i += 3) {
         glVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);
         glVertex3f(vertices[i + 1].x, vertices[i + 1].y, vertices[i + 1].z);
         glVertex3f(vertices[i + 2].x, vertices[i + 2].y, vertices[i + 2].z);
-        drawn++;
     }
-    cout << "Número de triangulos desenhados: " << drawn;
     glEnd();
 }
+
+/*
+
+    1 -> translate
+    2 -> rotate
+    3 -> scale
+
+    4 -> pushMatrix
+    5 -> popMatrix
+
+    6-> model
+*/
+
+void draw() {
+    int modelInd = 0;
+
+    for(int i=0 ; i<transformations.size() ; i++){
+
+        switch((int)transformations[i]) {
+
+            case 1:
+                glTranslatef(transformations[i + 1], transformations[i + 2], transformations[i + 3]);
+                i += 3;
+                printf("Translação\n");
+                break;
+
+            case 2:
+                glRotatef(transformations[i + 1], transformations[i + 2], transformations[i + 3],transformations[i + 4]);
+                i += 4;
+                printf("Rotação\n");
+                break;
+
+            case 3:
+                glScalef(transformations[i + 1], transformations[i + 2], transformations[i + 3]);
+                i += 3;
+                printf("Escala\n");
+                break;
+
+            case 4:
+                glPushMatrix();
+                printf("Push\n");
+                break;
+
+            case 5:
+                glPopMatrix();
+                printf("Pop\n");
+                break;
+
+            case 6:
+                parser(models[modelInd]);
+                modelInd++;
+                drawPrimitive();
+                vertices.clear();
+                printf("File\n");
+                break;
+        }
+    }
+
+
+}
+
 
 
 void readCamera(TiXmlElement* l_pRootElement){
@@ -250,25 +357,6 @@ void readCamera(TiXmlElement* l_pRootElement){
         near = std::stod(l_proj->Attribute("near"));
         far = std::stod(l_proj->Attribute("far"));
     }
-}
-
-
-void readModels(){
-    /*if (NULL != l_models) {
-
-                    TiXmlElement* l_model = l_models->FirstChildElement("model");
-
-                    while (l_model) {
-
-                        parser(l_model->Attribute("file"));
-                        cout << l_model->Attribute("file");
-                        l_model = l_model->NextSiblingElement("model");
-                    }
-                }
-                else {
-                    printf("models null");
-                }
-                */
 }
 
 
@@ -321,12 +409,24 @@ void readTransformations(TiXmlElement* l_group){
             TiXmlElement* l_nested_group = l_element;
             cout << l_nested_group->Value();
             readTransformations(l_nested_group);
+        }else{
+            TiXmlElement* l_models = l_element;
+            TiXmlElement* l_model = l_models->FirstChildElement();
+
+            while (l_model != NULL){
+                const char* model = strdup(l_model->Attribute("file"));
+                models.push_back(model);
+                transformations.push_back(6.0f);
+                l_model = l_model->NextSiblingElement();
+            }
+
+
         }
         l_element = l_element->NextSiblingElement(); //avançar o elemento XML
     }
-
     transformations.push_back(5.0f); // pop_matrix
 }
+
 
 void readXML() {
 
@@ -346,16 +446,12 @@ void readXML() {
         }
     }
     else {
-        //printf("Ficheiro nao carregado");
-    }
-
-
-    for(int i = 0; i < transformations.size() ; i++) {
-        cout << transformations[i] << endl;
+        printf("Ficheiro nao carregado");
     }
 
 
 }
+
 
 void renderScene(void) {
 
@@ -364,21 +460,30 @@ void renderScene(void) {
 
     // set the camera
     glLoadIdentity();
-    gluLookAt(x1, t1, z1,
+
+
+
+
+     gluLookAt(camX, camY, camZ,
               x2, y2, z2,
               x3, y3, z3);
 
     glBegin(GL_LINES);
-
-
-    glColor3f(1.0f, 1.0f, 1.0f);
-    glBegin(GL_TRIANGLES);
-    for (std::size_t i = 0; i < vertices.size(); i += 3) {
-        glVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);
-        glVertex3f(vertices[i + 1].x, vertices[i + 1].y, vertices[i + 1].z);
-        glVertex3f(vertices[i + 2].x, vertices[i + 2].y, vertices[i + 2].z);
-    }
+    // X axis in red
+    glColor3f(1.0f, 0.0f, 0.0f);
+    glVertex3f(-100.0f, 0.0f, 0.0f);
+    glVertex3f( 100.0f, 0.0f, 0.0f);
+    // Y Axis in Green
+    glColor3f(0.0f, 1.0f, 0.0f);
+    glVertex3f(0.0f,-100.0f, 0.0f);
+    glVertex3f(0.0f, 100.0f, 0.0f);
+    // Z Axis in Blue
+    glColor3f(0.0f, 0.0f, 1.0f);
+    glVertex3f(0.0f, 0.0f,-100.0f);
+    glVertex3f(0.0f, 0.0f, 100.0f);
     glEnd();
+
+    draw();
 
 
     // End of frame
@@ -399,6 +504,7 @@ int main(int argc, char** argv) {
 
 
     // Required callback registry
+    glutSpecialFunc(processSpecialKeys);
     glutDisplayFunc(renderScene);
     glutReshapeFunc(changeSize);
 

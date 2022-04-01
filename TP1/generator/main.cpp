@@ -1,13 +1,14 @@
 #ifdef __APPLE__
 #include <GLUT/glut.h>
-#else
 #include <fstream>
+#else
 #include <GL/glut.h>
 #endif
 
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include <string.h>
+#include <stdio.h>
 #include <vector>
 
 using namespace std;
