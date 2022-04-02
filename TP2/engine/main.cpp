@@ -29,7 +29,6 @@ struct vertex {
 vector<vertex> vertices;
 vector<float> transformations;
 vector<const char*> models;
-vector< TiXmlElement*> groupStack;
 
 
 /*
@@ -287,29 +286,24 @@ void draw() {
             case 1:
                 glTranslatef(transformations[i + 1], transformations[i + 2], transformations[i + 3]);
                 i += 3;
-                printf("Translação\n");
                 break;
 
             case 2:
                 glRotatef(transformations[i + 1], transformations[i + 2], transformations[i + 3],transformations[i + 4]);
                 i += 4;
-                printf("Rotação\n");
                 break;
 
             case 3:
                 glScalef(transformations[i + 1], transformations[i + 2], transformations[i + 3]);
                 i += 3;
-                printf("Escala\n");
                 break;
 
             case 4:
                 glPushMatrix();
-                printf("Push\n");
                 break;
 
             case 5:
                 glPopMatrix();
-                printf("Pop\n");
                 break;
 
             case 6:
@@ -317,7 +311,6 @@ void draw() {
                 modelInd++;
                 drawPrimitive();
                 vertices.clear();
-                printf("File\n");
                 break;
         }
     }
@@ -327,7 +320,7 @@ void draw() {
 
 
 
-void readCamera(TiXmlElement* l_pRootElement){
+void readCamera(TiXmlElement* l_pRootElement){ 
     TiXmlElement* l_camera = l_pRootElement->FirstChildElement("camera");
 
     if (loadOkay) {
@@ -406,7 +399,6 @@ void readTransformations(TiXmlElement* l_group){
         }
         else if(strcmp(l_element->Value(), "group") == 0){
             TiXmlElement* l_nested_group = l_element;
-            cout << l_nested_group->Value();
             readTransformations(l_nested_group);
         }else{
             TiXmlElement* l_models = l_element;
