@@ -99,7 +99,7 @@ void changeSize(int w, int h) {
     if (h == 0)
         h = 1;
 
-    // compute window's aspect ratio
+    // compute window's aspect ratio 
     float ratio = w * 1.0 / h;
 
     // Set the projection matrix as current
@@ -119,7 +119,7 @@ void changeSize(int w, int h) {
 
 
 void tokenize(std::string const& str, const char delim,
-              std::vector<std::string>& out)
+    std::vector<std::string>& out)
 {
     size_t start;
     size_t end = 0;
@@ -132,8 +132,7 @@ void tokenize(std::string const& str, const char delim,
 }
 
 
-// parse de ficheiros .3d
-void parser(const char* filename) {
+ void parser(const char* filename) {
 
     string line;
     ifstream myfile(filename);
@@ -164,14 +163,17 @@ void parser(const char* filename) {
 }
 
 
-void drawPrimitive(){
-    glColor3f(1.0f, 1.0f, 1.0f);
+void draw(vector<vertex> vertices) {
+    int drawn = 0;
     glBegin(GL_TRIANGLES);
     for (std::size_t i = 0; i < vertices.size(); i += 3) {
         glVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);
         glVertex3f(vertices[i + 1].x, vertices[i + 1].y, vertices[i + 1].z);
         glVertex3f(vertices[i + 2].x, vertices[i + 2].y, vertices[i + 2].z);
+        printf("%f, %f, %f\n", vertices[i], vertices[i + 1], vertices[i + 2]);
+        drawn++;
     }
+    cout << "Número de triangulos desenhados: " << drawn;
     glEnd();
 }
 
@@ -232,8 +234,10 @@ void draw() {
         }
     }
 
+    TiXmlDocument doc(filename);
+    bool loadOkay = doc.LoadFile();
 
-}
+    if (loadOkay) {
 
 void renderScene(void) {
 
@@ -242,7 +246,11 @@ void renderScene(void) {
 
     // set the camera
     glLoadIdentity();
+    gluLookAt(x1, t1, z1,
+        x2, y2, z2,
+        x3, y3, z3);
 
+    glBegin(GL_LINES);
 
 
 
@@ -264,8 +272,6 @@ void renderScene(void) {
     glVertex3f(0.0f, 0.0f,-100.0f);
     glVertex3f(0.0f, 0.0f, 100.0f);
     glEnd();
-
-    draw();
 
 
     // End of frame

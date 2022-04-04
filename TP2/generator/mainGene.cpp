@@ -173,13 +173,15 @@ void writeCube(int length, int divisions, char* fileName) {
 
             // ------- LADO 2
 
+            MyFile << endx << ";" << starty + size << ";" << startz + size << ";";
+            MyFile << endx << ";" << starty << ";" << startz + size << ";";
+            MyFile << endx << ";" << starty + size << ";" << startz << std::endl;
+
             MyFile << endx << ";" << starty << ";" << startz << ";";
             MyFile << endx << ";" << starty + size << ";" << startz << ";";
             MyFile << endx << ";" << starty << ";" << startz + size << std::endl;
 
-            MyFile << endx << ";" << starty + size << ";" << startz + size << ";";
-            MyFile << endx << ";" << starty << ";" << startz + size << ";";
-            MyFile << endx << ";" << starty + size << ";" << startz << std::endl;
+            
 
         }
     }
