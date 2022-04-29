@@ -1,6 +1,5 @@
 #ifdef __APPLE__
 #include <GLUT/glut.h>
-#include <fstream>
 #else
 #include <GL/glut.h>
 #endif
@@ -9,6 +8,7 @@
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
+#include <string>
 #include <vector>
 #include <fstream>
 #include <iostream>
@@ -25,17 +25,22 @@ struct vertex {
 
 int n_patches;
 int n_control_points;
+
 vector<std::string> patches_indices;
 vector<std::string> control_points;
 
-void tokenize(std::string const& str, const char delim,
-              std::vector<std::string>& out)
+float preCalculatedMatrixx[4][4];
+float preCalculatedMatrixy[4][4];
+float preCalculatedMatrixz[4][4];
+
+
+
+void tokenize(std::string const& str, const char delim, std::vector<std::string>& out)
 {
     size_t start;
     size_t end = 0;
 
-    while ((start = str.find_first_not_of(delim, end)) != std::string::npos)
-    {
+    while ((start = str.find_first_not_of(delim, end)) != std::string::npos){
         end = str.find(delim, start);
         out.push_back(str.substr(start, end - start));
     }
@@ -44,16 +49,12 @@ void tokenize(std::string const& str, const char delim,
 
 void parsePatch(char* filename){
     string line;
-    cout << "primeiro\n";
     ifstream myfile(filename);
     int i = 0;
 
     const char delimiter = ',';
 
-    cout << "Ola\n";
-
     if (myfile.is_open()){
-        cout << "Hello\n";
         while (getline(myfile, line)){
             if(i == 0){
                 n_patches = stoi(line);
@@ -77,50 +78,34 @@ void parsePatch(char* filename){
 
 }
 
-vertex** getControlPointsMatrix(int currentPatch){
+void getControlPointsMatrix(int currentPatch, int coord, float matrix[4][4]) {
 
-    vertex** matrix = (vertex**) malloc(sizeof(vertex*) * 4);
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            int index = stoi(patches_indices.at(16 * 3 * currentPatch + coord));
+            matrix[i][j] = stof(control_points.at(index));
+        }
+    }
+}
 
-    int aux = 0;
-
+void printMatrix(float m[4][4]){
     for(int i = 0; i < 4; i++){
-        matrix[i] = (vertex*)malloc(sizeof(vertex) * 4);
-
         for(int j = 0; j < 4; j++){
-            int index1 = stoi(patches_indices.at(16*3*currentPatch + aux));
-            int index2 = stoi(patches_indices.at(16*3*currentPatch + aux + 1));
-            int index3 = stoi(patches_indices.at(16*3*currentPatch + aux + 2));
-            matrix[i][j].x = stof(control_points.at(index1));
-            matrix[i][j].y = stof(control_points.at(index2));
-            matrix[i][j].z = stof(control_points.at(index3));
-            aux += 3;
+            printf("%f ", m[i][j]);
         }
-    }
-
-    return matrix;
-
-}
-
-void multMatrixVector(float** m, float *v, float *res) {
-    for (int j = 0; j < 4; ++j) {
-        res[j] = 0;
-        for (int k = 0; k < 4; ++k) {
-            res[j] += v[k] * m[j][k];
-        }
+        printf("\n");
     }
 }
 
 
-void multVectorMatrix(float* v, float **m, float *res) {
-    // (a b c) ((x,y,z) 2 3)
-    //         ((j,k,i) 5 6)
-    //         (7 8     9)
-    // 1 x 3  3 x 3 = 1 x 3
+void multLineColumn(float l[4], float c[4][1], float *res){
+    for(int i = 0; i < 4; i++){
+        *res += l[i] * c[i][0];
+    }
+}
 
-    // a = a*1 + b*4 + c*7
-    // b = a*2 + b*5 + c*8
-    // c = a*3 + b*6 + c*9
 
+void multVectorMatrix(float v[4], float m[4][4], float res[4]) {
     for(int i = 0; i < 4; i++){
         res[i] = 0;
 
@@ -129,7 +114,7 @@ void multVectorMatrix(float* v, float **m, float *res) {
     }
 }
 
-void transposeMatrix(float **m, float** res){
+void transposeMatrix(float m[4][4], float res[4][4]){
     for(int i = 0 ; i < 4 ; i++){
         for(int j = 0; j  < 4; j++){
             res[j][i] = m[i][j];
@@ -137,7 +122,7 @@ void transposeMatrix(float **m, float** res){
     }
 }
 
-void multMatrixMatrix(float **m, float **v, float **res) {
+void multMatrixMatrix(float m[4][4], float v[4][4], float res[4][4]) {
 
     for (int i = 0; i < 4; i++) {
         for (int j = 0; j < 4; j++) {
@@ -150,48 +135,67 @@ void multMatrixMatrix(float **m, float **v, float **res) {
     }
 }
 
+void preCalculate(int currentPatch) {
 
-float getSurfacePoint(float u, float v, vertex** controlPoints){
-
-    float preCalculatedVector[4];
-    float prepreCalculatedMatrix[4][4];
-    float preCalculatedMatrix[4][4];
-    float finalMatrix[][];
-    float mTranspose[4][4];
+    float aux[4][4];
+    float controlPoints[4][4];
 
 
-    // catmull-rom matrix
-    float m[4][4] = {	{-0.5f,  1.5f, -1.5f,  0.5f},
+    float m[4][4] = {{-0.5f,  1.5f, -1.5f,  0.5f},
                          { 1.0f, -2.5f,  2.0f, -0.5f},
                          {-0.5f,  0.0f,  0.5f,  0.0f},
                          { 0.0f,  1.0f,  0.0f,  0.0f}};
 
+    float mTransposed[4][4];
+    transposeMatrix(m, mTransposed);
 
-    float uVector[4] = {powf(u,3), powf(u,2), u, 1};
-    float vVector[1][4] = {{powf(v,3), powf(v,2), v, 1}};
+    getControlPointsMatrix((int)currentPatch,(int) 0, controlPoints);
+    multMatrixMatrix(m, controlPoints, aux);
+    multMatrixMatrix(aux, mTransposed, preCalculatedMatrixx);
 
-    transposeMatrix((float **) m, (float **) mTranspose);
+    getControlPointsMatrix((int)currentPatch, (int)1, controlPoints);
+    multMatrixMatrix(m, controlPoints, aux);
+    multMatrixMatrix(aux, mTransposed, preCalculatedMatrixy);
 
-    multVectorMatrix((float*)uVector,(float**)m,(float*)preCalculatedVector);
-    multVectorMatrix((float*)preCalculatedVector,(float**)controlPoints,(float*)prepreCalculatedMatrix);
-    multVectorMatrix((float*)prepreCalculatedMatrix, (float**)mTranspose, (float*)preCalculatedMatrix);
-    multVectorMatrix((float*)preCalculatedMatrix, (float**)vVector, (float*)finalMatrix);
-
-    // 1 x 4 . 4 x 4 = 1 x 4 . 4 x 4 = 1 x 4
-
-    float point[3];
-
+    getControlPointsMatrix((int)currentPatch, (int)2, controlPoints);
+    multMatrixMatrix(m, controlPoints, aux);
+    multMatrixMatrix(aux, mTransposed, preCalculatedMatrixz);
 
 }
 
 
+float* getSurfacePoint(float u, float v){
 
+    float values[3];
+    float controlPoints[4][4];
 
+    float uVector[4] = {powf(u,3), powf(u,2), u, 1};
+    float vVector[4][1] = {{powf(v,3)}, 
+                           {powf(v,2)}, 
+                           {v}, 
+                           {1}};
 
+    float aux[3];
 
+    //calculate x
+    multVectorMatrix(uVector, preCalculatedMatrixx, aux);
+    multLineColumn(aux, vVector, &values[0]);
 
+    //calculate y
+    multVectorMatrix(uVector, preCalculatedMatrixy, aux);
+    multLineColumn(aux, vVector, &values[1]);
+    
+    
+    //calculate z
+    multVectorMatrix(uVector, preCalculatedMatrixz, aux);
+    multLineColumn(aux, vVector, &values[2]);
 
+    for(int i = 0; i < 3; i++){
+        printf("%f\n", values[i]);
+    }
 
+    return values;
+}
 
 
 
