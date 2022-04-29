@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #ifdef __APPLE__
 #include <GLUT/glut.h>
 #else
@@ -28,15 +29,22 @@ int n_control_points;
 
 vector<std::string> patches_indices;
 vector<std::string> control_points;
+vector<float*> final_points;
 
 float preCalculatedMatrixx[4][4];
 float preCalculatedMatrixy[4][4];
 float preCalculatedMatrixz[4][4];
 
+vertex assignCoords(float radius, int currStack, int currSlice, float i_beta, float d_beta, float d_alpha) {
+    vertex v = {
+            radius * cos(i_beta - (currStack * d_beta)) * sin(currSlice * d_alpha),
+            radius * sin(i_beta - (currStack * d_beta)),
+            radius * cos(i_beta - (currStack * d_beta)) * cos(currSlice * d_alpha),
+    };
+    return v;
+}
 
-
-void tokenize(std::string const& str, const char delim, std::vector<std::string>& out)
-{
+void tokenize(std::string const& str, const char delim, std::vector<std::string>& out){
     size_t start;
     size_t end = 0;
 
@@ -46,26 +54,25 @@ void tokenize(std::string const& str, const char delim, std::vector<std::string>
     }
 }
 
-
-void parsePatch(char* filename){
+void parsePatch(char* filename) {
     string line;
     ifstream myfile(filename);
     int i = 0;
 
     const char delimiter = ',';
 
-    if (myfile.is_open()){
-        while (getline(myfile, line)){
-            if(i == 0){
+    if (myfile.is_open()) {
+        while (getline(myfile, line)) {
+            if (i == 0) {
                 n_patches = stoi(line);
             }
-            else if(i > 0 && i < n_patches + 1){
+            else if (i > 0 && i < n_patches + 1) {
                 tokenize(line, delimiter, patches_indices);
             }
-            else if(i == n_patches + 1){
+            else if (i == n_patches + 1) {
                 n_control_points = stoi(line);
             }
-            else if(i > n_patches + 1 && i < n_patches + n_control_points + 2){
+            else if (i > n_patches + 1 && i < n_patches + n_control_points + 2) {
                 tokenize(line, delimiter, control_points);
             }
             std::cout << line << "\n";
@@ -73,9 +80,7 @@ void parsePatch(char* filename){
         }
         myfile.close();
     }
-
     else printf("Unable to open file");
-
 }
 
 void getControlPointsMatrix(int currentPatch, int coord, float matrix[4][4]) {
@@ -97,13 +102,11 @@ void printMatrix(float m[4][4]){
     }
 }
 
-
 void multLineColumn(float l[4], float c[4][1], float *res){
     for(int i = 0; i < 4; i++){
         *res += l[i] * c[i][0];
     }
 }
-
 
 void multVectorMatrix(float v[4], float m[4][4], float res[4]) {
     for(int i = 0; i < 4; i++){
@@ -163,7 +166,6 @@ void preCalculate(int currentPatch) {
 
 }
 
-
 float* getSurfacePoint(float u, float v){
 
     float values[3];
@@ -175,7 +177,7 @@ float* getSurfacePoint(float u, float v){
                            {v}, 
                            {1}};
 
-    float aux[3];
+    float aux[4];
 
     //calculate x
     multVectorMatrix(uVector, preCalculatedMatrixx, aux);
@@ -184,7 +186,6 @@ float* getSurfacePoint(float u, float v){
     //calculate y
     multVectorMatrix(uVector, preCalculatedMatrixy, aux);
     multLineColumn(aux, vVector, &values[1]);
-    
     
     //calculate z
     multVectorMatrix(uVector, preCalculatedMatrixz, aux);
@@ -197,6 +198,46 @@ float* getSurfacePoint(float u, float v){
     return values;
 }
 
+
+void writeSurface(int tesselation, char* fileName){
+    
+    float u_step = 1/tesselation;
+    float v_step = 1/tesselation;
+
+    std::ofstream MyFile(fileName);
+
+    // u é horizontal -> colunas
+    // v é vertical   -> horizontal
+
+    for(int currentPatch = 0; currentPatch < n_patches; currentPatch++){
+        for(float u = 0; u <= 1; u += u_step){
+            for(float v = 0; v <= 1; v += v_step){
+                preCalculate(currentPatch);
+                float* ponto1 = getSurfacePoint(u, v);                    //0,0    esquerda cima
+                float* ponto2 = getSurfacePoint(u+u_step, v);             //1,0    direita cima
+                float* ponto3 = getSurfacePoint(u, v+v_step);             //0,1    esquerda baixo
+                float* ponto4 = getSurfacePoint(u + u_step, v + v_step);  //1,1    direita baixo
+                
+
+                //escrever 0,0 esquerda cima
+                MyFile << ponto1[0] << ";" << ponto1[1] << ";" << ponto1[2] << ";";
+                //escrever 0,1 esquerda baixo
+                MyFile << ponto3[0] << ";" << ponto3[1] << ";" << ponto3[2] << ";";
+                //escrever 1,1 direita baixo
+                MyFile << ponto4[0] << ";" << ponto4[1] << ";" << ponto4[2] << ";" << endl;
+            
+
+                //escrever 0,0 esquerda cima
+                MyFile << ponto1[0] << ";" << ponto1[1] << ";" << ponto1[2] << ";";
+                //escrever 1,1 direita baixo
+                MyFile << ponto4[0] << ";" << ponto4[1] << ";" << ponto4[2] << ";";
+                //escrever 1,0 direita cima
+                MyFile << ponto2[0] << ";" << ponto2[1] << ";" << ponto2[2] << ";" << endl;
+                
+            }
+        }
+    }
+}
 
 
 void writePlane(int length, int divisions, char* fileName) {
@@ -503,16 +544,6 @@ void writeCone(float radius, float height, int cone_slices, int cone_stacks, cha
     }
 }
 
-
-vertex assignCoords(float radius, int currStack, int currSlice, float i_beta, float d_beta, float d_alpha) {
-    vertex v = {
-            radius * cos(i_beta - (currStack * d_beta)) * sin(currSlice * d_alpha),
-            radius * sin(i_beta - (currStack * d_beta)),
-            radius * cos(i_beta - (currStack * d_beta)) * cos(currSlice * d_alpha),
-    };
-    return v;
-}
-
 void writeSphere(float radius, int slices, int stacks, char* filename) {
 
     std::ofstream Myfile(filename);
@@ -552,6 +583,17 @@ void writeSphere(float radius, int slices, int stacks, char* filename) {
 
 }
 
+void writeBezier(char* patchFilename, int nr, char* filename) {
+
+    parsePatch(patchFilename);
+    //writeSurface(filename);
+
+
+
+
+}
+
+
 void choosePrimitive() {
     if (strcmp(arguments[1], "sphere") == 0 && argumentsLen >= 4) {
         writeSphere(atoi(arguments[2]), atoi(arguments[3]), atoi(arguments[4]), arguments[5]);
@@ -577,7 +619,14 @@ void choosePrimitive() {
         drawRing(atof(arguments[2]),atof(arguments[3]),atoi(arguments[4]),arguments[5]);
     }
 
+    if (strcmp(arguments[1], "bezier") == 0 && argumentsLen >= 4) {
+        writeBezier(arguments[2], atoi(arguments[3]),arguments[4]);
+    }
+
+
 }
+
+
 
 
 int main(int argc, char** argv) {
@@ -587,6 +636,8 @@ int main(int argc, char** argv) {
 
     //choosePrimitive();
     parsePatch("teapot.patch");
+    writeSurface(10,"bezier.3d");
+
 
     return 1;
 }
