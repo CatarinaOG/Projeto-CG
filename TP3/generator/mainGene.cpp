@@ -82,7 +82,6 @@ void parsePatch(char* filename) {
     else printf("Unable to open file");
 }
 
-
 void printMatrix(float m[4][4]){
     for(int i = 0; i < 4; i++){
         for(int j = 0; j < 4; j++){
@@ -201,7 +200,6 @@ float* getSurfacePoint(float u, float v){
     return values;
 }
 
-
 void writeSurface(int tesselation, char* fileName){
     
     float u_step = (float) 1/ (float) tesselation;
@@ -221,8 +219,8 @@ void writeSurface(int tesselation, char* fileName){
                 preCalculate(currentPatch);
 
                 float* ponto1 = getSurfacePoint(u, v);                    //0,0    esquerda cima
-                float* ponto2 = getSurfacePoint(u+u_step, v);                 //1,0    direita cima
-                float* ponto3 = getSurfacePoint(u, v+v_step);                //0,1    esquerda baixo
+                float* ponto2 = getSurfacePoint(u+u_step, v);             //1,0    direita cima
+                float* ponto3 = getSurfacePoint(u, v+v_step);             //0,1    esquerda baixo
                 float* ponto4 = getSurfacePoint(u + u_step, v + v_step);  //1,1    direita baixo
 
 
@@ -591,11 +589,7 @@ void writeSphere(float radius, int slices, int stacks, char* filename) {
 void writeBezier(char* patchFilename, int nr, char* filename) {
 
     parsePatch(patchFilename);
-    //writeSurface(filename);
-
-
-
-
+    writeSurface(nr,filename);
 }
 
 
@@ -627,11 +621,7 @@ void choosePrimitive() {
     if (strcmp(arguments[1], "bezier") == 0 && argumentsLen >= 4) {
         writeBezier(arguments[2], atoi(arguments[3]),arguments[4]);
     }
-
-
 }
-
-
 
 
 int main(int argc, char** argv) {
@@ -640,10 +630,7 @@ int main(int argc, char** argv) {
     argumentsLen = argc;
 
     //choosePrimitive();
-    parsePatch("teapot.patch");
-    printf("%d\n", patches_indices.size());
-    writeSurface(10,"bezier.3d");
-
+    choosePrimitive();
 
     return 1;
 }
