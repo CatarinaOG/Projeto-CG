@@ -45,6 +45,7 @@ void  xml_parse::readTransformations(TiXmlElement* l_group){
                             float translate_x = std::stod(l_point->Attribute("x"));
                             float translate_y = std::stod(l_point->Attribute("y"));
                             float translate_z = std::stod(l_point->Attribute("z"));
+                            transformations.push_back(7.0f);
                             controlPoints.push_back(translate_x);
                             controlPoints.push_back(translate_y);
                             controlPoints.push_back(translate_y);
@@ -72,6 +73,7 @@ void  xml_parse::readTransformations(TiXmlElement* l_group){
                         float rotate_x = std::stod(l_transformation->Attribute("x"));
                         float rotate_y = std::stod(l_transformation->Attribute("y"));
                         float rotate_z = std::stod(l_transformation->Attribute("z"));
+                        transformations.push_back(8.0f);
                         rotatePoint.push_back(rotate_x);
                         rotatePoint.push_back(rotate_y);
                         rotatePoint.push_back(rotate_z);

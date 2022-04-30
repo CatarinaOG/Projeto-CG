@@ -31,15 +31,10 @@ vector<vertex> allvertices;
 vector<vertex> vertices;
 vector< TiXmlElement*> groupStack;
 
-
-/*
-    1 -> translate
-    2 -> rotate
-    3 -> scale
-    4 -> pushMatrix
-    5 -> popMatrix
-    6-> model
-*/
+// Translate Catmull
+static float t=0;
+float pos[4];
+float deriv[4];
 
 void spherical2Cartesian() {
 
@@ -170,6 +165,92 @@ void drawPrimitive(){
     glEnd();
 }
 
+
+
+void multMatrixVector(float *m, float *v, float *res) {
+
+    for (int j = 0; j < 4; ++j) {
+        res[j] = 0;
+        for (int k = 0; k < 4; ++k) {
+            res[j] += v[k] * m[j * 4 + k];
+        }
+    }
+}
+
+
+void getCatmullRomPoint(float t, float *p0, float *p1, float *p2, float *p3, float *pos, float *deriv) {
+
+    // catmull-rom matrix
+    float m[4][4] = {	{-0.5f,  1.5f, -1.5f,  0.5f},
+                         { 1.0f, -2.5f,  2.0f, -0.5f},
+                         {-0.5f,  0.0f,  0.5f,  0.0f},
+                         { 0.0f,  1.0f,  0.0f,  0.0f}};
+
+    // Compute A = M * P
+    float a[4];
+    float tVector[4] = {pow(t, 3.0f), pow(t, 2.0f), t, 1};
+    float tVectorL[4] = {3*pow(t, 2.0f), 2*t, 1, 0};
+
+    for (int i = 0; i < 3; i++){ //for each component
+        float ponto[4] = {p0[i], p1[i], p2[i], p3[i]};
+
+        multMatrixVector((float *) m, ponto, a);
+
+        // Compute pos = T * A
+
+        pos[i] = tVector[0] * a[0] + tVector[1] * a[1] + tVector[2] * a[2] + tVector[3] * a[3];
+
+        // compute deriv = T' * A
+
+        deriv[i] = tVectorL[0] * a[0] + tVectorL[1] * a[1] + tVectorL[2] * a[2];
+    }
+
+    // ...
+}
+
+
+// given  global t, returns the point in the curve
+void getGlobalCatmullRomPoint(float gt, float *pos, float *deriv) {
+
+    int n_points = xmlParse->controlPoints.size();
+    // Points that make up the loop for catmull-rom interpolation
+
+    float t = gt * n_points; // this is the real global t
+    int index = floor(t);  // which segment
+    t = t - index; // where within  the segment
+
+    // indices store the points
+    int indices[n_points];
+
+    indices[0] = (index +n_points-1)%n_points;
+    indices[1] = (indices[0]+1)%n_points;
+    indices[2] = (indices[1]+1)%n_points;
+    indices[3] = (indices[2]+1)%n_points;
+
+    float p0[3] = {xmlParse->controlPoints.at(indices[0]), xmlParse->controlPoints.at(indices[0]+1), xmlParse->controlPoints.at(indices[0]+2)};
+    float p1[3] = {xmlParse->controlPoints.at(indices[1]), xmlParse->controlPoints.at(indices[1]+1), xmlParse->controlPoints.at(indices[1]+2)};
+    float p2[3] = {xmlParse->controlPoints.at(indices[2]), xmlParse->controlPoints.at(indices[2]+1), xmlParse->controlPoints.at(indices[2]+2)};
+    float p3[3] = {xmlParse->controlPoints.at(indices[3]), xmlParse->controlPoints.at(indices[3]+1), xmlParse->controlPoints.at(indices[3]+2)};
+
+    getCatmullRomPoint(t, p0, p1, p2, p3, pos, deriv);
+}
+
+void renderCatmullRomCurve() {
+
+    // draw curve using line segments with GL_LINE_LOOP
+    float pos[4];
+    float deriv[4];
+
+    glBegin(GL_LINE_LOOP);
+
+    for (int i = 0; i < 50; ++i) {
+        getGlobalCatmullRomPoint(i / 50.0, pos, deriv);
+        glVertex3f(pos[0], pos[1], pos[2]);
+    }
+    glEnd();
+}
+
+
 /*
     1 -> translate
     2 -> rotate
@@ -177,6 +258,8 @@ void drawPrimitive(){
     4 -> pushMatrix
     5 -> popMatrix
     6-> model
+    7-> translate catmull
+    8-> rotate catmull
 */
 
 void draw() {
@@ -219,8 +302,12 @@ void draw() {
                 modelInd++;
                 drawPrimitive();
                 vertices.clear();
-                //printf("File\n");
                 break;
+
+            case 7:
+                renderCatmullRomCurve();
+                getGlobalCatmullRomPoint(t,pos,deriv);
+                glTranslatef(pos[0],pos[1],pos[2]);
         }
     }
 }
@@ -232,9 +319,6 @@ void renderScene(void) {
 
     // set the camera
     glLoadIdentity();
-
-
-
 
     gluLookAt(camX, camY, camZ,
               xmlParse->x2, xmlParse->y2, xmlParse->z2,
