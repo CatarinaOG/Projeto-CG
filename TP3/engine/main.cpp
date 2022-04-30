@@ -48,6 +48,7 @@ void spherical2Cartesian() {
     camZ = radius * cos(beta) * cos(alpha);
 }
 
+
 void processKeys(unsigned char c, int xx, int yy) {
 
 // put code to process regular keys in here
@@ -86,7 +87,6 @@ void processSpecialKeys(int key, int xx, int yy){
     spherical2Cartesian();
     glutPostRedisplay();
 }
-
 
 
 void changeSize(int w, int h) {
@@ -138,10 +138,8 @@ void parser(const char* filename) {
     const char delimiter = ';';
     std::vector<std::string> out;
 
-    if (myfile.is_open())
-    {
-        while (getline(myfile, line))
-        {
+    if (myfile.is_open()){
+        while (getline(myfile, line)){
             tokenize(line, delimiter, out); //ler linha do ficheiro
         }
         myfile.close();
@@ -191,29 +189,29 @@ void draw() {
             case 1:
                 glTranslatef(xmlParse->transformations[i + 1], xmlParse->transformations[i + 2], xmlParse->transformations[i + 3]);
                 i += 3;
-                printf("Translação\n");
+                //printf("Translação\n");
                 break;
 
             case 2:
                 glRotatef(xmlParse->transformations[i + 1], xmlParse->transformations[i + 2], xmlParse->transformations[i + 3],xmlParse->transformations[i + 4]);
                 i += 4;
-                printf("Rotação\n");
+                //("Rotação\n");
                 break;
 
             case 3:
                 glScalef(xmlParse->transformations[i + 1], xmlParse->transformations[i + 2], xmlParse->transformations[i + 3]);
                 i += 3;
-                printf("Escala\n");
+                //("Escala\n");
                 break;
 
             case 4:
                 glPushMatrix();
-                printf("Push\n");
+                //printf("Push\n");
                 break;
 
             case 5:
                 glPopMatrix();
-                printf("Pop\n");
+                //printf("Pop\n");
                 break;
 
             case 6:
@@ -221,12 +219,10 @@ void draw() {
                 modelInd++;
                 drawPrimitive();
                 vertices.clear();
-                printf("File\n");
+                //printf("File\n");
                 break;
         }
     }
-
-
 }
 
 void renderScene(void) {

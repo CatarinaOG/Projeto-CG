@@ -22,24 +22,60 @@ void  xml_parse::readTransformations(TiXmlElement* l_group){
 
             while(l_transformation != NULL){
                 if (strcmp(l_transformation->Value(), "translate") == 0) {
-                    float translate_x = std::stod(l_transformation->Attribute("x"));
-                    float translate_y = std::stod(l_transformation->Attribute("y"));
-                    float translate_z = std::stod(l_transformation->Attribute("z"));
-                    transformations.push_back(1.0f);
-                    transformations.push_back(translate_x);
-                    transformations.push_back(translate_y);
-                    transformations.push_back(translate_z);
+
+                    const char* time = l_transformation->Attribute("time");
+
+                    if (time == NULL) {
+
+                        float translate_x = std::stod(l_transformation->Attribute("x"));
+                        float translate_y = std::stod(l_transformation->Attribute("y"));
+                        float translate_z = std::stod(l_transformation->Attribute("z"));
+                        transformations.push_back(1.0f);
+                        transformations.push_back(translate_x);
+                        transformations.push_back(translate_y);
+                        transformations.push_back(translate_z);
+                    }
+                    else{
+                        translateTime = stof(time);
+                        translateAlign = l_transformation->Attribute("align");
+
+                        TiXmlElement* l_point = l_transformation->FirstChildElement();
+
+                        while(l_point != NULL){
+                            float translate_x = std::stod(l_point->Attribute("x"));
+                            float translate_y = std::stod(l_point->Attribute("y"));
+                            float translate_z = std::stod(l_point->Attribute("z"));
+                            controlPoints.push_back(translate_x);
+                            controlPoints.push_back(translate_y);
+                            controlPoints.push_back(translate_y);
+                            l_point = l_point->NextSiblingElement();
+                        }
+                    }
                 }
                 else if (strcmp(l_transformation->Value(), "rotate") == 0) {
-                    float angle = std::stod(l_transformation->Attribute("angle"));
-                    float rotate_x = std::stod(l_transformation->Attribute("x"));
-                    float rotate_y = std::stod(l_transformation->Attribute("y"));
-                    float rotate_z = std::stod(l_transformation->Attribute("z"));
-                    transformations.push_back(2.0f);
-                    transformations.push_back(angle);
-                    transformations.push_back(rotate_x);
-                    transformations.push_back(rotate_y);
-                    transformations.push_back(rotate_z);
+
+                    const char* time = l_transformation->Attribute("time");
+
+                    if (time == NULL) {
+                        float angle = std::stod(l_transformation->Attribute("angle"));
+                        float rotate_x = std::stod(l_transformation->Attribute("x"));
+                        float rotate_y = std::stod(l_transformation->Attribute("y"));
+                        float rotate_z = std::stod(l_transformation->Attribute("z"));
+                        transformations.push_back(2.0f);
+                        transformations.push_back(angle);
+                        transformations.push_back(rotate_x);
+                        transformations.push_back(rotate_y);
+                        transformations.push_back(rotate_z);
+                    }
+                    else{
+                        float rotateTime = std::stod(time);
+                        float rotate_x = std::stod(l_transformation->Attribute("x"));
+                        float rotate_y = std::stod(l_transformation->Attribute("y"));
+                        float rotate_z = std::stod(l_transformation->Attribute("z"));
+                        rotatePoint.push_back(rotate_x);
+                        rotatePoint.push_back(rotate_y);
+                        rotatePoint.push_back(rotate_z);
+                    }
                 }
                 else if (strcmp(l_transformation->Value(), "scale") == 0) {
                     float scale_x = std::stod(l_transformation->Attribute("x"));
@@ -55,7 +91,6 @@ void  xml_parse::readTransformations(TiXmlElement* l_group){
         }
         else if(strcmp(l_element->Value(), "group") == 0){
             TiXmlElement* l_nested_group = l_element;
-            cout << l_nested_group->Value();
             readTransformations(l_nested_group);
         }else{
             TiXmlElement* l_models = l_element;
@@ -67,7 +102,6 @@ void  xml_parse::readTransformations(TiXmlElement* l_group){
                 transformations.push_back(6.0f);
                 l_model = l_model->NextSiblingElement();
             }
-
 
         }
         l_element = l_element->NextSiblingElement(); //avançar o elemento XML
@@ -127,8 +161,6 @@ void xml_parse::readXML(char* filename) {
     else {
         printf("Ficheiro nao carregado");
     }
-
-
 }
 
 

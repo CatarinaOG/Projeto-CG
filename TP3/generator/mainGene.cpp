@@ -75,7 +75,6 @@ void parsePatch(char* filename) {
             else if (i > n_patches + 1 && i < n_patches + n_control_points + 2) {
                 tokenize(line, delimiter, control_points);
             }
-            std::cout << line << "\n";
             i++;
         }
         myfile.close();
@@ -83,15 +82,6 @@ void parsePatch(char* filename) {
     else printf("Unable to open file");
 }
 
-void getControlPointsMatrix(int currentPatch, int coord, float matrix[4][4]) {
-
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            int index = stoi(patches_indices.at(16 * 3 * currentPatch + coord));
-            matrix[i][j] = stof(control_points.at(index));
-        }
-    }
-}
 
 void printMatrix(float m[4][4]){
     for(int i = 0; i < 4; i++){
@@ -100,6 +90,18 @@ void printMatrix(float m[4][4]){
         }
         printf("\n");
     }
+}
+
+void getControlPointsMatrix(int currentPatch, int coord, float matrix[4][4]) {
+    int aux = 0;
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            int index = stoi(patches_indices.at(16 * currentPatch + aux));
+            matrix[i][j] = stof(control_points.at(3*index + coord));
+            aux++;
+        }
+    }
+    //printMatrix(matrix);
 }
 
 void multLineColumn(float l[4], float c[4][1], float *res){
@@ -143,24 +145,23 @@ void preCalculate(int currentPatch) {
     float aux[4][4];
     float controlPoints[4][4];
 
-
-    float m[4][4] = {{-0.5f,  1.5f, -1.5f,  0.5f},
-                         { 1.0f, -2.5f,  2.0f, -0.5f},
-                         {-0.5f,  0.0f,  0.5f,  0.0f},
-                         { 0.0f,  1.0f,  0.0f,  0.0f}};
+    float m[4][4] = {{-1.0f,  3.0f, -3.0f,  1.0f},
+                         { 3.0f, -6.0f,  3.0f, 0.0f},
+                         {-3.0f,  3.0f,  0.0f,  0.0f},
+                         { 1.0f,  0.0f,  0.0f,  0.0f}};
 
     float mTransposed[4][4];
     transposeMatrix(m, mTransposed);
 
-    getControlPointsMatrix((int)currentPatch,(int) 0, controlPoints);
+    getControlPointsMatrix(currentPatch,0, controlPoints);
     multMatrixMatrix(m, controlPoints, aux);
     multMatrixMatrix(aux, mTransposed, preCalculatedMatrixx);
 
-    getControlPointsMatrix((int)currentPatch, (int)1, controlPoints);
+    getControlPointsMatrix(currentPatch,1, controlPoints);
     multMatrixMatrix(m, controlPoints, aux);
     multMatrixMatrix(aux, mTransposed, preCalculatedMatrixy);
 
-    getControlPointsMatrix((int)currentPatch, (int)2, controlPoints);
+    getControlPointsMatrix(currentPatch, 2, controlPoints);
     multMatrixMatrix(m, controlPoints, aux);
     multMatrixMatrix(aux, mTransposed, preCalculatedMatrixz);
 
@@ -168,7 +169,13 @@ void preCalculate(int currentPatch) {
 
 float* getSurfacePoint(float u, float v){
 
-    float values[3];
+    float* values = (float*) malloc(sizeof(float)*4);
+
+    for(int i = 0; i < 4; i++) {
+        values[i] = 0.0f;
+    }
+
+    for(int i = 0; i < 4; i++) values[i] = 0;
     float controlPoints[4][4];
 
     float uVector[4] = {powf(u,3), powf(u,2), u, 1};
@@ -191,40 +198,40 @@ float* getSurfacePoint(float u, float v){
     multVectorMatrix(uVector, preCalculatedMatrixz, aux);
     multLineColumn(aux, vVector, &values[2]);
 
-    for(int i = 0; i < 3; i++){
-        printf("%f\n", values[i]);
-    }
-
     return values;
 }
 
 
 void writeSurface(int tesselation, char* fileName){
     
-    float u_step = 1/tesselation;
-    float v_step = 1/tesselation;
+    float u_step = (float) 1/ (float) tesselation;
+    float v_step = (float) 1/ (float) tesselation;
 
     std::ofstream MyFile(fileName);
 
     // u é horizontal -> colunas
     // v é vertical   -> horizontal
 
+    printf("N PATCHES: %d\n", n_patches);
+
     for(int currentPatch = 0; currentPatch < n_patches; currentPatch++){
-        for(float u = 0; u <= 1; u += u_step){
-            for(float v = 0; v <= 1; v += v_step){
+        for(float u = 0; u <= 1.05; u += u_step){
+            for(float v = 0; v <= 1.05; v += v_step){
+                //printf("u: %f | v: %f\n", u, v);
                 preCalculate(currentPatch);
+
                 float* ponto1 = getSurfacePoint(u, v);                    //0,0    esquerda cima
-                float* ponto2 = getSurfacePoint(u+u_step, v);             //1,0    direita cima
-                float* ponto3 = getSurfacePoint(u, v+v_step);             //0,1    esquerda baixo
+                float* ponto2 = getSurfacePoint(u+u_step, v);                 //1,0    direita cima
+                float* ponto3 = getSurfacePoint(u, v+v_step);                //0,1    esquerda baixo
                 float* ponto4 = getSurfacePoint(u + u_step, v + v_step);  //1,1    direita baixo
-                
+
 
                 //escrever 0,0 esquerda cima
                 MyFile << ponto1[0] << ";" << ponto1[1] << ";" << ponto1[2] << ";";
                 //escrever 0,1 esquerda baixo
                 MyFile << ponto3[0] << ";" << ponto3[1] << ";" << ponto3[2] << ";";
                 //escrever 1,1 direita baixo
-                MyFile << ponto4[0] << ";" << ponto4[1] << ";" << ponto4[2] << ";" << endl;
+                MyFile << ponto4[0] << ";" << ponto4[1] << ";" << ponto4[2] << endl;
             
 
                 //escrever 0,0 esquerda cima
@@ -232,19 +239,19 @@ void writeSurface(int tesselation, char* fileName){
                 //escrever 1,1 direita baixo
                 MyFile << ponto4[0] << ";" << ponto4[1] << ";" << ponto4[2] << ";";
                 //escrever 1,0 direita cima
-                MyFile << ponto2[0] << ";" << ponto2[1] << ";" << ponto2[2] << ";" << endl;
+                MyFile << ponto2[0] << ";" << ponto2[1] << ";" << ponto2[2] << endl;
                 
             }
         }
     }
+    MyFile.close();
 }
-
 
 void writePlane(int length, int divisions, char* fileName) {
 
     std::ofstream MyFile(fileName);
 
-    float size = static_cast<float>(length) / divisions;
+    float size = static_cast<float>(length) / (float) divisions;
     float startx = -(length / static_cast<float>(2));
     float startxFixo = startx;
     float startz = length / static_cast<float>(2);
@@ -576,11 +583,9 @@ void writeSphere(float radius, int slices, int stacks, char* filename) {
             Myfile << v1.x << ";" << v1.y << ";" << v1.z << ";";
             Myfile << v3.x << ";" << v3.y << ";" << v3.z << ";";
             Myfile << v4.x << ";" << v4.y << ";" << v4.z << std::endl;
-
         }
     }
     Myfile.close();
-
 }
 
 void writeBezier(char* patchFilename, int nr, char* filename) {
@@ -636,6 +641,7 @@ int main(int argc, char** argv) {
 
     //choosePrimitive();
     parsePatch("teapot.patch");
+    printf("%d\n", patches_indices.size());
     writeSurface(10,"bezier.3d");
 
 
