@@ -31,6 +31,9 @@ vector<vertex> allvertices;
 vector<vertex> vertices;
 vector< TiXmlElement*> groupStack;
 
+vector<char*> filesRead;
+vector<vector<vertex> > v_matrix;
+
 // Translate Catmull
 static float t=0;
 float pos[4];
@@ -133,8 +136,10 @@ void parser(const char* filename) {
     const char delimiter = ';';
     std::vector<std::string> out;
 
-    if (myfile.is_open()){
-        while (getline(myfile, line)){
+    if (myfile.is_open())
+    {
+        while (getline(myfile, line))
+        {
             tokenize(line, delimiter, out); //ler linha do ficheiro
         }
         myfile.close();
@@ -151,20 +156,27 @@ void parser(const char* filename) {
         };
         vertices.push_back(v1);
     }
+    vector<vertex> tmp;
+    for(int i = 0; i < vertices.size(); i++){
+        tmp.push_back(vertices[i]);
+    }
+    v_matrix.push_back(tmp);
+    vector<vector<vertex> > o = v_matrix;
+    vertices.clear();
+
 }
 
 
-void drawPrimitive(){
+void drawPrimitive(int fileIndex){
     glColor3f(1.0f, 1.0f, 1.0f);
     glBegin(GL_TRIANGLES);
-    for (std::size_t i = 0; i < vertices.size(); i += 3) {
-        glVertex3f(vertices[i].x, vertices[i].y, vertices[i].z);
-        glVertex3f(vertices[i + 1].x, vertices[i + 1].y, vertices[i + 1].z);
-        glVertex3f(vertices[i + 2].x, vertices[i + 2].y, vertices[i + 2].z);
+    for (std::size_t i = 0; i < v_matrix[fileIndex].size(); i += 3) {
+        glVertex3f(v_matrix[fileIndex][i].x, v_matrix[fileIndex][i].y, v_matrix[fileIndex][i].z);
+        glVertex3f(v_matrix[fileIndex][i + 1].x, v_matrix[fileIndex][i + 1].y, v_matrix[fileIndex][i + 1].z);
+        glVertex3f(v_matrix[fileIndex][i + 2].x, v_matrix[fileIndex][i + 2].y, v_matrix[fileIndex][i + 2].z);
     }
     glEnd();
 }
-
 
 
 void multMatrixVector(float *m, float *v, float *res) {
@@ -251,6 +263,7 @@ void renderCatmullRomCurve() {
 }
 
 
+
 /*
     1 -> translate
     2 -> rotate
@@ -298,16 +311,33 @@ void draw() {
                 break;
 
             case 6:
-                parser(xmlParse->models[modelInd]);
-                modelInd++;
-                drawPrimitive();
-                vertices.clear();
-                break;
+                printf("Ficheiro a desenhar: %s", xmlParse->models[modelInd]);
+                bool exists = false;
+                for(int i = 0; i < filesRead.size(); i++){
+                    if(strcmp(xmlParse->models[modelInd], filesRead[i]) == 0){
+                        printf("conteudo guardado %s", xmlParse->models[modelInd]);
+                        drawPrimitive(i);
+                        exists = true;
+                    }
+                }
 
+                if(!exists){
+                    
+                    parser(xmlParse->models[modelInd]);
+                    filesRead.push_back((char*) xmlParse->models[modelInd]);
+                    drawPrimitive(filesRead.size()-1);
+                    printf("Indice: %d, Ficheiro: %s\n", filesRead.size()-1, filesRead[filesRead.size()-1]);
+                }
+                modelInd++;
+                printf("File\n");
+                break;
+            /*
             case 7:
                 renderCatmullRomCurve();
                 getGlobalCatmullRomPoint(t,pos,deriv);
                 glTranslatef(pos[0],pos[1],pos[2]);
+                break;
+                */
         }
     }
 }
