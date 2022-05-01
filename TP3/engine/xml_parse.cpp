@@ -25,7 +25,6 @@ void  xml_parse::readTransformations(TiXmlElement* l_group){
                 if (strcmp(l_transformation->Value(), "translate") == 0) {
 
                     const char* time = l_transformation->Attribute("time");
-                    vector<float*> temp;
                     if (time == NULL) {
 
                         float translate_x = std::stod(l_transformation->Attribute("x"));
@@ -41,7 +40,7 @@ void  xml_parse::readTransformations(TiXmlElement* l_group){
                         translateAlign = (char*)strdup(l_transformation->Attribute("align"));
                         transformations.push_back(7.0f);
                         TiXmlElement* l_point = l_transformation->FirstChildElement();
-
+                        vector<float*>* vec = (vector<float*>*)(new vector<float>());
                         while(l_point != NULL){
                             float translate_x =  std::stod(l_point->Attribute("x"));
                             float translate_y =  std::stod(l_point->Attribute("y"));
@@ -51,10 +50,11 @@ void  xml_parse::readTransformations(TiXmlElement* l_group){
                             pt[0] = translate_x;
                             pt[1] = translate_y;
                             pt[2] = translate_z;
-                            temp.push_back(pt);
+                            vec->push_back(pt);
+                            controlPoints[countPoints] = vec;
                             l_point = l_point->NextSiblingElement();
+                            countPoints++;
                         }
-                        controlPoints.push_back(temp);
                         countCurves++;
                     }
                 }
