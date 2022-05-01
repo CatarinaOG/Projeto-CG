@@ -39,6 +39,7 @@ GLuint *buffers;
 
 vector<int> sizes;
 
+int countCurves;
 
 // Translate Catmull
 static float t=0;
@@ -46,8 +47,8 @@ float pos[4];
 float deriv[4];
 
 float xi[4];
-float zi[4];
-float y[4];
+float zi[4] = {0,0,0};
+float y[4] = {0,1,0};
 float y_prev[3] = {0,1,0};
 
 int curr_time_trans;
@@ -59,24 +60,19 @@ int t_prev_rot = 0;
 float degrees = 0;
 
 void spherical2Cartesian() {
-
     camX = radius * cos(beta) * sin(alpha);
     camY = radius * sin(beta);
     camZ = radius * cos(beta) * cos(alpha);
 }
 
-
 void buildRotMatrix(float *x, float *y, float *z, float *m) {
-
     m[0] = x[0]; m[1] = x[1]; m[2] = x[2]; m[3] = 0;
     m[4] = y[0]; m[5] = y[1]; m[6] = y[2]; m[7] = 0;
     m[8] = z[0]; m[9] = z[1]; m[10] = z[2]; m[11] = 0;
     m[12] = 0; m[13] = 0; m[14] = 0; m[15] = 1;
 }
 
-
 void cross(float *a, float *b, float *res) {
-
     res[0] = a[1]*b[2] - a[2]*b[1];
     res[1] = a[2]*b[0] - a[0]*b[2];
     res[2] = a[0]*b[1] - a[1]*b[0];
@@ -272,7 +268,7 @@ void getCatmullRomPoint(float t, float *p0, float *p1, float *p2, float *p3, flo
 // given  global t, returns the point in the curve
 void getGlobalCatmullRomPoint(float gt, float *pos, float *deriv) {
 
-    int n_points = (xmlParse->controlPoints.size() + 1) / 3;
+    int n_points = (xmlParse->controlPoints.at(countCurves).size() + 1) / 3;
     // Points that make up the loop for catmull-rom interpolation
 
     float t = gt * n_points; // this is the real global t
@@ -287,14 +283,12 @@ void getGlobalCatmullRomPoint(float gt, float *pos, float *deriv) {
     indices[2] = (indices[1]+1)%n_points;
     indices[3] = (indices[2]+1)%n_points;
 
+    vector<float*> tmp = xmlParse->controlPoints.at(countCurves);
 
-    for(int i = 0; i < 4; i++) printf("%d ", indices[i]);
-    printf("\n");
-
-    float p0[3] = {xmlParse->controlPoints.at(3*indices[0]), xmlParse->controlPoints.at(3*indices[0]+1), xmlParse->controlPoints.at(3*indices[0]+2)};
-    float p1[3] = {xmlParse->controlPoints.at(3*indices[1]), xmlParse->controlPoints.at(3*indices[1]+1), xmlParse->controlPoints.at(3*indices[1]+2)};
-    float p2[3] = {xmlParse->controlPoints.at(3*indices[2]), xmlParse->controlPoints.at(3*indices[2]+1), xmlParse->controlPoints.at(3*indices[2]+2)};
-    float p3[3] = {xmlParse->controlPoints.at(3*indices[3]), xmlParse->controlPoints.at(3*indices[3]+1), xmlParse->controlPoints.at(3*indices[3]+2)};
+    float* p0 = tmp.at(indices[0]);
+    float* p1 = tmp.at(indices[1]);
+    float* p2 = tmp.at(indices[2]);
+    float* p3 = tmp.at(indices[3]);
 
     getCatmullRomPoint(t, p0, p1, p2, p3, pos, deriv);
 }
@@ -329,28 +323,30 @@ void renderCatmullRomCurve() {
 
 void draw() {
     int modelInd = 0;
+    countCurves = 0;
     bool exists;
 
-    for(int i = 0; i < xmlParse->transformations.size(); i++) printf("%f ", xmlParse->transformations[i]);
-    printf("\n");
-    for(int i=0 ; i<xmlParse->transformations.size() ; i++){
+    for(int i=0 ; i<xmlParse->transformations.size() ; i++) {
 
-        switch((int)xmlParse->transformations[i]) {
+        switch ((int) xmlParse->transformations[i]) {
 
             case 1:
-                glTranslatef(xmlParse->transformations[i + 1], xmlParse->transformations[i + 2], xmlParse->transformations[i + 3]);
+                glTranslatef(xmlParse->transformations[i + 1], xmlParse->transformations[i + 2],
+                             xmlParse->transformations[i + 3]);
                 i += 3;
                 //printf("Translação\n");
                 break;
 
             case 2:
-                glRotatef(xmlParse->transformations[i + 1], xmlParse->transformations[i + 2], xmlParse->transformations[i + 3],xmlParse->transformations[i + 4]);
+                glRotatef(xmlParse->transformations[i + 1], xmlParse->transformations[i + 2],
+                          xmlParse->transformations[i + 3], xmlParse->transformations[i + 4]);
                 i += 4;
                 //("Rotação\n");
                 break;
 
             case 3:
-                glScalef(xmlParse->transformations[i + 1], xmlParse->transformations[i + 2], xmlParse->transformations[i + 3]);
+                glScalef(xmlParse->transformations[i + 1], xmlParse->transformations[i + 2],
+                         xmlParse->transformations[i + 3]);
                 i += 3;
                 //("Escala\n");
                 break;
@@ -366,29 +362,25 @@ void draw() {
                 break;
 
             case 6:
-                printf("Ficheiro a desenhar: %s\n", xmlParse->models[modelInd]);
                 exists = false;
-                for(int j = 0; j < filesRead.size(); j++){
-                    if(strcmp(xmlParse->models[modelInd], filesRead[j]) == 0){
-                        printf("conteudo guardado %s\n", xmlParse->models[modelInd]);
+                for (int j = 0; j < filesRead.size(); j++) {
+                    if (strcmp(xmlParse->models[modelInd], filesRead[j]) == 0) {
                         drawPrimitive(j);
                         exists = true;
                     }
                 }
-                if(!exists){
+                if (!exists) {
 
-                    filesRead.push_back((char*) xmlParse->models[modelInd]);
+                    filesRead.push_back((char *) xmlParse->models[modelInd]);
                     parser(xmlParse->models[modelInd]);
-                    drawPrimitive(filesRead.size()-1);
+                    drawPrimitive(filesRead.size() - 1);
                 }
                 modelInd++;
-                printf("File\n");
                 break;
             case 7:
                 renderCatmullRomCurve();
-                getGlobalCatmullRomPoint(t,pos,deriv);
-                printf("%s\n", xmlParse->translateAlign);
-                if(strcmp(xmlParse->translateAlign,"True")==0) {
+                getGlobalCatmullRomPoint(t, pos, deriv);;
+                if (strcmp(xmlParse->translateAlign, "True") == 0) {
                     for (int i = 0; i < 3; i++) {
                         xi[i] = deriv[i];
                     }
@@ -401,13 +393,9 @@ void draw() {
                     cross(zi, xi, y);
 
                     float rotMatrix[4][4];
-
                     buildRotMatrix(xi, y, zi, (float *) rotMatrix);
-
                     glTranslatef(pos[0], pos[1], pos[2]);
-
                     glMultMatrixf((float *) rotMatrix);
-
                     for (int i = 0; i < 3; i++) {
                         y_prev[i] = y[i];
                     }
@@ -417,29 +405,22 @@ void draw() {
 
                     t += (float) interval / (float) (xmlParse->translateTime * 1000);
 
-                    printf("valor de t: %f\n", t);
-
                     t_prev_trans = curr_time_trans;
-                }
-                else{
+                } else {
                     glTranslatef(pos[0], pos[1], pos[2]);
                 }
-
+                countCurves++;
                 break;
             case 8:
-
                 curr_time_rot = glutGet(GLUT_ELAPSED_TIME);
-
                 int interval = curr_time_rot - t_prev_rot;
-
-                degrees += (360.0f/(float) curr_time_rot) * (float) interval;
-
+                float deg = (360.0f / ((float) xmlParse->rotateTime * 1000)) * (float) interval;
+                printf("%d\n", interval);
+                printf("%f\n", deg);
+                degrees += deg;
                 t_prev_rot = curr_time_rot;
-
                 glRotatef(degrees, 0, 1, 0);
-
                 break;
-
         }
     }
 }
@@ -470,9 +451,6 @@ void renderScene(void) {
     glVertex3f(0.0f, 0.0f,-100.0f);
     glVertex3f(0.0f, 0.0f, 100.0f);
     glEnd();
-
-
-
 
 
     draw();
@@ -528,7 +506,6 @@ int main(int argc, char** argv) {
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // enter GLUT's main cycle
-    printf("%d\n", models.size());
     glGenBuffers(models.size(), buffers);
     glutMainLoop();
 

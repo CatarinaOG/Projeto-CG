@@ -16,7 +16,7 @@ namespace myXML{
     public:
         std::vector<float> transformations;
         std::vector<const char*> models;
-        std::vector<float> controlPoints;
+        std::vector<std::vector<float*> > controlPoints;
         int translateTime;
         int rotateTime;
 

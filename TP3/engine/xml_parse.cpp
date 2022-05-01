@@ -10,6 +10,7 @@ using namespace myXML;
 
 void  xml_parse::readTransformations(TiXmlElement* l_group){
     transformations.push_back(4.0f); // push_matrix
+    int countCurves = 0;
 
     TiXmlElement* l_element = l_group->FirstChildElement();
 
@@ -24,7 +25,7 @@ void  xml_parse::readTransformations(TiXmlElement* l_group){
                 if (strcmp(l_transformation->Value(), "translate") == 0) {
 
                     const char* time = l_transformation->Attribute("time");
-                    printf("Time: %s\n", time);
+                    vector<float*> temp;
                     if (time == NULL) {
 
                         float translate_x = std::stod(l_transformation->Attribute("x"));
@@ -46,11 +47,15 @@ void  xml_parse::readTransformations(TiXmlElement* l_group){
                             float translate_y =  std::stod(l_point->Attribute("y"));
                             float translate_z =  std::stod(l_point->Attribute("z"));
 
-                            controlPoints.push_back(translate_x);
-                            controlPoints.push_back(translate_y);
-                            controlPoints.push_back(translate_z);
+                            float* pt =(float*) malloc(sizeof(float) * 3);
+                            pt[0] = translate_x;
+                            pt[1] = translate_y;
+                            pt[2] = translate_z;
+                            temp.push_back(pt);
                             l_point = l_point->NextSiblingElement();
                         }
+                        controlPoints.push_back(temp);
+                        countCurves++;
                     }
                 }
                 else if (strcmp(l_transformation->Value(), "rotate") == 0) {
@@ -69,7 +74,7 @@ void  xml_parse::readTransformations(TiXmlElement* l_group){
                         transformations.push_back(rotate_z);
                     }
                     else{
-                        float rotateTime = std::stod(time);
+                        rotateTime = std::stod(time);
                         float rotate_x = std::stod(l_transformation->Attribute("x"));
                         float rotate_y = std::stod(l_transformation->Attribute("y"));
                         float rotate_z = std::stod(l_transformation->Attribute("z"));
