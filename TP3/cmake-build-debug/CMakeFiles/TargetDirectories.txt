@@ -1,0 +1,3 @@
+/home/joao/git/TPs/Projeto-CG/TP3/cmake-build-debug/CMakeFiles/edit_cache.dir
+/home/joao/git/TPs/Projeto-CG/TP3/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/joao/git/TPs/Projeto-CG/TP3/cmake-build-debug/CMakeFiles/TP1_Engine_Clion.dir

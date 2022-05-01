@@ -1,0 +1,301 @@
+<world> <!-- a world can have a camera, a set of lights, and a single group -->
+
+    <camera>
+        <position x="500" y="50" z="1800" />
+        <lookAt x="500" y="0" z="0" />
+        <up x="0" y="1" z="0" /> <!-- optional, use these values as default-->
+        <projection fov="60" near="1" far="5000" /> <!-- optional, use these values as default-->
+    </camera>
+
+    <group>
+
+        <group><!-- sun-->
+            <transform>
+                <scale x="29" y="29" z="29" />
+                <rotate time="14" x="0" y="1" z="0" />
+            </transform>
+
+            <models>
+                <model file="sphere.3d" /> <!-- generator sphere 7.8 10 10 sphere.3d -->
+            </models>
+        </group>
+
+
+        <transform>
+            <translate x="276" y="0" z="0" /> <!-- distancia mercurio sol -->
+        </transform>
+
+        <group><!-- mercury-->
+            <transform>
+                <translate time = "2.4" align="True" > <!-- O campo orient diz se o objecto deve ser orientado na curva -->
+                    <point x = "0" y = "0" z = "0" /> x
+                    <point x = "-80" y= "0" z ="195" />
+                    <point x = "-276" y = "0" z = "276" /> x
+                    <point x = "-471" y = "0" z="195 "/>
+                    <point x = "-552" y = "0" z = "0" /> x
+                    <point x = "-471" y = "0" z = "-195" />
+                    <point x = "-276" y = "0" z = "-276" /> x
+                    <point x = "-81" y = "0" z = "-195" />
+                </translate>
+                <scale x="0.33" y="0.33" z="0.33" />
+                <rotate time="5" x="0" y="1" z="0" />
+            </transform>
+            <models>
+                <model file="sphere.3d" /><!-- generator sphere 7.8 10 10 sphere.3d -->
+            </models>
+        </group>
+
+
+        <transform>
+            <translate x="15" y="0" z="0" /> <!--  distancia venus mercurio -->
+        </transform>
+
+        <group><!-- venus-->
+            <transform>
+                <translate time = "6.1" align="True" > <!-- O campo orient diz se o objecto deve ser orientado na curva -->
+                    <point x = "0" y = "0" z = "0" /> x
+                    <point x = "-85" y= "0" z ="205" />
+                    <point x = "-290" y = "0" z = "291" /> x
+                    <point x = "-496" y = "0" z="206 "/>
+                    <point x = "-581" y = "0" z = "0" /> x
+                    <point x = "-497" y = "0" z = "-205" />
+                    <point x = "-291" y = "0" z = "-290" /> x
+                    <point x = "-86" y = "0" z = "-206" />
+                </translate>
+                <scale x="1" y="1" z="1" />
+                <rotate time="10" x="0" y="1" z="0" />
+            </transform>
+            <models>
+                <model file="sphere.3d" /> <!-- generator sphere 7.8 10 10 sphere.3d -->
+            </models>
+        </group>
+
+
+
+
+        <transform>
+            <translate x="30" y="0" z="0" /> <!-- dist relativa terra-venus -->
+        </transform>
+
+        <group><!-- earth-->
+            <transform>
+                <translate time = "10" align="True" > <!-- O campo orient diz se o objecto deve ser orientado na curva -->
+                    <point x = "0" y = "0" z = "0" /> x
+                    <point x = "-94" y= "0" z ="227" />
+                    <point x = "-321" y = "0" z = "321" /> x
+                    <point x = "-548" y = "0" z="227 "/>
+                    <point x = "-642" y = "0" z = "0" /> x
+                    <point x = "-548" y = "0" z = "-225" />
+                    <point x = "-321" y = "0" z = "-321" /> x
+                    <point x = "-95" y = "0" z = "-228" />
+                </translate>
+                <scale x="1" y="1" z="1" />
+                <rotate time="10" x="0" y="1" z="0" />
+
+            </transform>
+            <models>
+                <model file="sphere.3d" /><!-- generator sphere 7.8 10 10 sphere.3d -->
+            </models>
+            <transform>
+                <translate x="10" y="0" z="0" /> <!-- -->
+            </transform>
+            <group><!-- earth moon-->
+                <transform>
+                    <translate time = "10" align="True" > <!-- O campo orient diz se o objecto deve ser orientado na curva -->
+                        <point  x = " 0.0 " y = "0"   z=" 0.0 " />
+                        <point  x = " -2.928 " y = "0"   z=" 7.071 " />
+                        <point  x = " -10.0 " y = "0"   z=" 10.0 " />
+                        <point  x = " -17.071 " y = "0"   z=" 7.071 " />
+                        <point  x = " -20.0 " y = "0"   z=" 0 " />
+                        <point  x = " -17.071 " y = "0"   z=" -7.071 " />
+                        <point  x = " -10 " y = "0"   z=" -10.0 " />
+                        <point  x = " -2.929 " y = "0"   z=" -7.071 " />
+                    </translate>
+                    <scale x="0.27" y="0.27" z="0.27" />
+                </transform>
+                <models>
+                    <model file="sphere.3d" /> <!-- generator sphere 3.9 5 5 box.3d -->
+                </models>
+            </group>
+        </group>
+
+
+
+        <transform>
+            <translate x="35" y="0" z="0" /> <!-- dist relativa terra marte -->
+        </transform>
+
+        <group><!-- mars-->
+            <transform>
+                <translate time = "18" align="True" > <!-- O campo orient diz se o objecto deve ser orientado na curva -->
+                    <point x = " 0 " y = "0"   z=" 0 " />
+                    <point x = " -105 " y = "0"   z=" 251 " />
+                    <point x = " -356 " y = "0"   z=" 355 " />
+                    <point x = " -608 " y = "0"   z=" 252 " />
+                    <point x = " -712 " y = "0"   z=" 0 " />
+                    <point x = " -609 " y = "0"   z=" -252 " />
+                    <point x = " -357 " y = "0"   z=" -356 " />
+                    <point x = " -105 " y = "0"   z=" -253 " />
+                </translate>
+                <scale x="0.5" y="0.5" z="0.5" />
+                <rotate time="10" x="0" y="1" z="0" />
+
+            </transform>
+            <models>
+                <model file="sphere.3d" /><!-- generator sphere 7.8 10 10 sphere.3d -->
+            </models>
+        </group>
+
+
+        <transform>
+            <translate x="180" y="0" z="0" /> <!-- dist relativa sol jupiter menos dist até ao momento (16)-->
+        </transform>
+
+        <group><!-- Jupiter-->
+            <transform>
+                <translate time = "120" align="True" > <!-- O campo orient diz se o objecto deve ser orientado na curva -->
+                    <point x = " 0 " y = "0"   z=" 0 " />
+                    <point x = " -157 " y = "0"   z=" 378 " />
+                    <point x = " -536 " y = "0"   z=" 535 " />
+                    <point x = " -915 " y = "0"   z=" 379 " />
+                    <point x = " -1072 " y = "0"   z=" 0 " />
+                    <point x = " -916 " y = "0"   z=" -379 " />
+                    <point x = " -538 " y = "0"   z=" -536 " />
+                    <point x = " -159 " y = "0"   z=" -381 " />
+                </translate>
+                <scale x="11" y="11" z="11" />
+            </transform>
+            <group>
+                <transform>
+                    <rotate time="10" x="0" y="1" z="0" />
+                </transform>
+                <models>
+                    <model file="sphere.3d" /> <!-- generator sphere 7.8 10 10 sphere.3d -->
+                </models>
+            </group>
+            <transform>
+                <rotate angle = "10" x = "1" y = "0" z = "0"/>
+            </transform>
+            <models>
+                <model file="ring.3d" /> <!-- generator ring 11 1 128 ring.3d-->
+            </models>
+        </group>
+
+
+        <transform>
+            <translate x="145" y="0" z="0" /> <!-- dist relativa sol saturno menos dist até ao momento (52)-->
+        </transform>
+
+        <group><!-- Comet -->
+            <transform>
+                <translate time = "15" align="True" > <!-- O campo orient diz se o objecto deve ser orientado na curva -->
+                    <point    x = "  0 " y = "0"   z=" 0 " />
+                    <point    x = "  -73 " y = "0"   z=" 150 " />
+                    <point    x = "  -250 " y = "0"   z=" 275  " />
+                    <point    x = "  -450 " y = "0"   z=" 300 " />
+                    <point    x = "  -650 " y = "0"   z=" 290 " />
+                    <point    x = "  -827 " y = "0"   z=" 235 " />
+                    <point    x = " -900 " y = "0"   z=" 0 " />
+                    <point    x = " -827 " y = "0"   z=" -235 " />
+                    <point    x = " -650 " y = "0"   z=" -290 " />
+                    <point    x = " -450 " y = "0"   z=" -300 " />
+                    <point    x = " -250 " y = "0"   z=" -275 " />
+                    <point    x = " -73 " y = "0"   z=" -150 " />
+
+                </translate>
+                <scale x="0.75" y="0.75" z="0.75" />
+            </transform>
+            <models>
+                <model file="bezier.3d" /> <!-- generator sphere 7.8 10 10 sphere.3d -->
+            </models>
+        </group>
+
+        <transform>
+            <translate x="145" y="0" z="0" /> <!-- dist relativa sol saturno menos dist até ao momento (52)-->
+        </transform>
+
+
+        <group><!-- saturn -->
+            <transform>
+                <translate time = "294" align="True" > <!-- O campo orient diz se o objecto deve ser orientado na curva -->
+                    <point x = " 0 " y = "0"   z=" 0 " />
+                    <point x = " -242 " y = "0"   z=" 583 " />
+                    <point x = " -826 " y = "0"   z=" 825 " />
+                    <point x = " -1410 " y = "0"   z=" 584 " />
+                    <point x = " -1652 " y = "0"   z=" 1 " />
+                    <point x = " -1412 " y = "0"   z=" -583 " />
+                    <point x = " -828 " y = "0"   z=" -826 " />
+                    <point x = " -244 " y = "0"   z=" -586 " />
+                </translate>
+                <scale x="9" y="9" z="9" />
+            </transform>
+            <group>
+                <transform>
+                    <rotate time="10" x="0" y="1" z="0" />
+                </transform>
+                <models>
+                    <model file="sphere.3d" /> <!-- generator sphere 7.8 10 10 sphere.3d -->
+                </models>
+            </group>
+            <transform>
+                <rotate angle = "-30" x = "1" y = "0" z = "0"/>
+            </transform>
+            <models>
+                <model file="ring_saturn.3d" /> <!-- generator ring 11 2 128 ring_saturn.3d-->
+            </models>
+        </group>
+
+
+        <transform>
+            <translate x="240" y="0" z="0" /> <!-- dist relativa sol urano menos dist até ao momento (100)-->
+        </transform>
+
+        <group><!-- uranus -->
+            <transform>
+                <translate time = "836" align="True" > <!-- O campo orient diz se o objecto deve ser orientado na curva -->
+                    <point x = " 0 " y = "0"   z=" 0 " />
+                    <point x = " -312 " y = "0"   z=" 753 " />
+                    <point x = " -1066 " y = "0"   z=" 1065 " />
+                    <point x = " -1819 " y = "0"   z=" 754 " />
+                    <point x = " -2132 " y = "0"   z=" 1 " />
+                    <point x = " -1822 " y = "0"   z=" -753 " />
+                    <point x = " -1069 " y = "0"   z=" -1066 " />
+                    <point x = " -315 " y = "0"   z=" -756 " />
+                </translate>
+                <scale x="4" y="4" z="4" />
+                <rotate time="10" x="0" y="1" z="0" />
+
+            </transform>
+            <models>
+                <model file="sphere.3d" /> <!-- generator sphere 7.8 10 10 sphere.3d -->
+            </models>
+        </group>
+
+
+        <transform>
+            <translate x="490" y="0" z="0" /> <!-- dist relativa sol neptuno menos dist até ao momento (196)-->
+        </transform>
+
+        <group><!-- neptune -->
+            <transform>
+                <translate time = "1637" align="True" > <!-- O campo orient diz se o objecto deve ser orientado na curva -->
+                    <point x = " 0 " y = "0"   z=" 0 " />
+                    <point x = " -456 " y = "0"   z=" 1099 " />
+                    <point x = " -1555 " y = "0"   z=" 1555 " />
+                    <point x = " -2655 " y = "0"   z=" 1101 " />
+                    <point x = " -3112 " y = "0"   z=" 2 " />
+                    <point x = " -2659 " y = "0"   z=" -1099 " />
+                    <point x = " -1560 " y = "0"   z=" -1556 " />
+                    <point x = " -459 " y = "0"   z=" -1104 " />
+                </translate>
+                <scale x="4" y="4" z="4" />
+                <rotate time="10" x="0" y="1" z="0" />
+
+            </transform>
+            <models>
+                <model file="sphere.3d" /> <!-- generator sphere 7.8 10 10 sphere.3d -->
+            </models>
+        </group>
+
+    </group>
+</world>
