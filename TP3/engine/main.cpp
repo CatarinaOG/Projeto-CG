@@ -50,6 +50,13 @@ float zi[4];
 float y[4];
 float y_prev[3] = {0,1,0};
 
+int curr_time_trans;
+int t_prev_trans = 0;
+
+int curr_time_rot;
+int t_prev_rot = 0;
+
+float degrees = 0;
 
 void spherical2Cartesian() {
 
@@ -377,7 +384,6 @@ void draw() {
                 modelInd++;
                 printf("File\n");
                 break;
-
             case 7:
                 renderCatmullRomCurve();
                 getGlobalCatmullRomPoint(t,pos,deriv);
@@ -405,14 +411,35 @@ void draw() {
                     for (int i = 0; i < 3; i++) {
                         y_prev[i] = y[i];
                     }
+
+                    curr_time_trans = glutGet(GLUT_ELAPSED_TIME);
+                    int interval = curr_time_trans - t_prev_trans;
+
+                    t += (float) interval / (float) (xmlParse->translateTime * 1000);
+
+                    printf("valor de t: %f\n", t);
+
+                    t_prev_trans = curr_time_trans;
                 }
                 else{
                     glTranslatef(pos[0], pos[1], pos[2]);
                 }
 
+                break;
+            case 8:
 
+                curr_time_rot = glutGet(GLUT_ELAPSED_TIME);
+
+                int interval = curr_time_rot - t_prev_rot;
+
+                degrees += (360.0f/(float) curr_time_rot) * (float) interval;
+
+                t_prev_rot = curr_time_rot;
+
+                glRotatef(degrees, 0, 1, 0);
 
                 break;
+
         }
     }
 }
@@ -444,10 +471,11 @@ void renderScene(void) {
     glVertex3f(0.0f, 0.0f, 100.0f);
     glEnd();
 
+
+
+
+
     draw();
-
-
-    t += 0.001;
 
 
     // End of frame
