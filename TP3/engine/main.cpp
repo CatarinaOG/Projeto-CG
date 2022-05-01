@@ -32,7 +32,13 @@ vector<vertex> vertices;
 vector< TiXmlElement*> groupStack;
 
 vector<char*> filesRead;
+vector<const char*> models;
 vector<vector<vertex> > v_matrix;
+
+GLuint *buffers;
+
+vector<int> sizes;
+
 
 // Translate Catmull
 static float t=0;
@@ -156,26 +162,29 @@ void parser(const char* filename) {
         };
         vertices.push_back(v1);
     }
-    vector<vertex> tmp;
+    vector<float> tmp;
     for(int i = 0; i < vertices.size(); i++){
-        tmp.push_back(vertices[i]);
+        tmp.push_back(vertices[i].x);
+        tmp.push_back(vertices[i].y);
+        tmp.push_back(vertices[i].z);
     }
-    v_matrix.push_back(tmp);
-    vector<vector<vertex> > o = v_matrix;
-    vertices.clear();
 
+    glBindBuffer(GL_ARRAY_BUFFER, buffers[filesRead.size()-1]);
+    glVertexPointer(3, GL_FLOAT, 0, 0);
+    glBufferData(GL_ARRAY_BUFFER, tmp.size()*sizeof(float), tmp.data(), GL_STATIC_DRAW);
+
+    sizes.push_back(tmp.size());
+
+    vertices.clear();
 }
 
 
 void drawPrimitive(int fileIndex){
     glColor3f(1.0f, 1.0f, 1.0f);
-    glBegin(GL_TRIANGLES);
-    for (std::size_t i = 0; i < v_matrix[fileIndex].size(); i += 3) {
-        glVertex3f(v_matrix[fileIndex][i].x, v_matrix[fileIndex][i].y, v_matrix[fileIndex][i].z);
-        glVertex3f(v_matrix[fileIndex][i + 1].x, v_matrix[fileIndex][i + 1].y, v_matrix[fileIndex][i + 1].z);
-        glVertex3f(v_matrix[fileIndex][i + 2].x, v_matrix[fileIndex][i + 2].y, v_matrix[fileIndex][i + 2].z);
-    }
-    glEnd();
+
+    glBindBuffer(GL_ARRAY_BUFFER, buffers[fileIndex]);
+    glVertexPointer(3, GL_FLOAT, 0, 0);
+    glDrawArrays(GL_TRIANGLES, 0, sizes.at(fileIndex));
 }
 
 
@@ -311,22 +320,21 @@ void draw() {
                 break;
 
             case 6:
-                printf("Ficheiro a desenhar: %s", xmlParse->models[modelInd]);
+                printf("Ficheiro a desenhar: %s\n", xmlParse->models[modelInd]);
                 bool exists = false;
-                for(int i = 0; i < filesRead.size(); i++){
-                    if(strcmp(xmlParse->models[modelInd], filesRead[i]) == 0){
-                        printf("conteudo guardado %s", xmlParse->models[modelInd]);
-                        drawPrimitive(i);
+                for(int j = 0; j < filesRead.size(); j++){
+                    if(strcmp(xmlParse->models[modelInd], filesRead[j]) == 0){
+                        printf("conteudo guardado %s\n", xmlParse->models[modelInd]);
+                        drawPrimitive(j);
                         exists = true;
                     }
                 }
 
                 if(!exists){
-                    
-                    parser(xmlParse->models[modelInd]);
+
                     filesRead.push_back((char*) xmlParse->models[modelInd]);
+                    parser(xmlParse->models[modelInd]);
                     drawPrimitive(filesRead.size()-1);
-                    printf("Indice: %d, Ficheiro: %s\n", filesRead.size()-1, filesRead[filesRead.size()-1]);
                 }
                 modelInd++;
                 printf("File\n");
@@ -377,6 +385,18 @@ void renderScene(void) {
 }
 
 
+void diferent_models(){
+    for(int i = 0; i < xmlParse->models.size(); i++){
+        bool exists = false;
+        for(int j = 0; j < models.size() && !exists; j++){
+            if(strcmp(models.at(j), xmlParse->models.at(i)) == 0) exists = true;
+        }
+        if(!exists){
+            models.push_back(xmlParse->models.at(i));
+        }
+    }
+}
+
 int main(int argc, char** argv) {
 
     // init GLUT and the window
@@ -388,6 +408,12 @@ int main(int argc, char** argv) {
     filename = argv[1];
     //readXML();
     xmlParse->readXML(filename);
+    diferent_models();
+
+
+    GLuint aux[models.size()];
+    buffers = aux;
+
 
     // Required callback registry
     glutSpecialFunc(processSpecialKeys);
@@ -398,10 +424,13 @@ int main(int argc, char** argv) {
     //  OpenGL settings
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
+    glEnableClientState(GL_VERTEX_ARRAY);
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // enter GLUT's main cycle
+    printf("%d\n", models.size());
+    glGenBuffers(models.size(), buffers);
     glutMainLoop();
 
     return 1;
