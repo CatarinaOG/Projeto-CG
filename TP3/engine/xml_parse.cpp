@@ -24,7 +24,7 @@ void  xml_parse::readTransformations(TiXmlElement* l_group){
                 if (strcmp(l_transformation->Value(), "translate") == 0) {
 
                     const char* time = l_transformation->Attribute("time");
-
+                    printf("Time: %s\n", time);
                     if (time == NULL) {
 
                         float translate_x = std::stod(l_transformation->Attribute("x"));
@@ -37,18 +37,18 @@ void  xml_parse::readTransformations(TiXmlElement* l_group){
                     }
                     else{
                         translateTime = stof(time);
-                        translateAlign = l_transformation->Attribute("align");
-
+                        translateAlign = (char*)strdup(l_transformation->Attribute("align"));
+                        transformations.push_back(7.0f);
                         TiXmlElement* l_point = l_transformation->FirstChildElement();
 
                         while(l_point != NULL){
-                            float translate_x = std::stod(l_point->Attribute("x"));
-                            float translate_y = std::stod(l_point->Attribute("y"));
-                            float translate_z = std::stod(l_point->Attribute("z"));
-                            transformations.push_back(7.0f);
+                            float translate_x =  std::stod(l_point->Attribute("x"));
+                            float translate_y =  std::stod(l_point->Attribute("y"));
+                            float translate_z =  std::stod(l_point->Attribute("z"));
+
                             controlPoints.push_back(translate_x);
                             controlPoints.push_back(translate_y);
-                            controlPoints.push_back(translate_y);
+                            controlPoints.push_back(translate_z);
                             l_point = l_point->NextSiblingElement();
                         }
                     }

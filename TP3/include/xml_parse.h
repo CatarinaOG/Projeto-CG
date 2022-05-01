@@ -20,7 +20,7 @@ namespace myXML{
         int translateTime;
         int rotateTime;
 
-        const char* translateAlign;
+        char* translateAlign;
 
         std::vector<float> rotatePoint;
 
