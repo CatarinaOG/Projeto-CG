@@ -14,6 +14,7 @@
 #include <iostream>
 #include "../tinyxml.h"
 #include "../include/xml_parse.h"
+
 using namespace std;
 using namespace myXML;
 
@@ -26,7 +27,7 @@ float yVec[3];
 float* r = (float*) malloc(sizeof(float)*3);
 
 
-float alpha = 0.0f, beta = 0.0f, radius = 5.0f;
+double alpha /*= 0.0f*/, beta /*= 0.0f*/, radius /*= 5.0f*/;
 
 xml_parse* xmlParse = new xml_parse();
 char* filename;
@@ -76,6 +77,9 @@ int interval;
 
 bool showCurve = true;
 
+
+
+
 void cross(float *a, float *b, float *res) {
     res[0] = a[1]*b[2] - a[2]*b[1];
     res[1] = a[2]*b[0] - a[0]*b[2];
@@ -111,6 +115,21 @@ void normalize(float * a) {
 }
 
 
+void cameraOrientarionNewAxis(){
+    calculateVec(look, camPos, lookVec);
+    normalize(lookVec);
+    cross(lookVec, up, r);
+    normalize(r);
+    cross(r, lookVec, yVec);
+    normalize(yVec);
+    printf("look: %f %f %f\n",look[0],look[1],look[2]);
+    printf("camPos: %f %f %f\n",camPos[0],camPos[1],camPos[2]);
+    printf("lookVec: %f %f %f\n",lookVec[0],lookVec[1],lookVec[2]);
+    printf("r: %f %f %f\n",r[0],r[1],r[2]);
+    printf("yVec: %f %f %f\n",yVec[0],yVec[1],yVec[2]);
+
+}
+
 void processKeys(unsigned char c, int xx, int yy) {
 
 // put code to process regular keys in here
@@ -129,91 +148,105 @@ void processKeys(unsigned char c, int xx, int yy) {
             break;
         case 'd':
 
-            camPos[0] += r[0]*5;
-            camPos[1] += r[1]*5;
-            camPos[2] += r[2]*5;
+            camPos[0] += r[0]*10;
+            camPos[1] += r[1]*10;
+            camPos[2] += r[2]*10;
 
-            look[0] += r[0]*5;
-            look[1] += r[1]*5;
-            look[2] += r[2]*5;
-
+            look[0] += r[0]*10;
+            look[1] += r[1]*10;
+            look[2] += r[2]*10;
             break;
+
         case 'a':
-            camPos[0] -= r[0]*5;
-            camPos[1] -= r[1]*5;
-            camPos[2] -= r[2]*5;
+            camPos[0] -= r[0]*10;
+            camPos[1] -= r[1]*10;
+            camPos[2] -= r[2]*10;
 
-            look[0] -= r[0]*5;
-            look[1] -= r[1]*5;
-            look[2] -= r[2]*5;
+            look[0] -= r[0]*10;
+            look[1] -= r[1]*10;
+            look[2] -= r[2]*10;
             break;
+
         case 'w':
-            camPos[0] += lookVec[0]*5;
-            camPos[1] += lookVec[1]*5;
-            camPos[2] += lookVec[2]*5;
+            camPos[0] += lookVec[0]*10;
+            camPos[1] += lookVec[1]*10;
+            camPos[2] += lookVec[2]*10;
 
-            look[0] += lookVec[0]*5;
-            look[1] += lookVec[1]*5;
-            look[2] += lookVec[2]*5;
+            look[0] += lookVec[0]*10;
+            look[1] += lookVec[1]*10;
+            look[2] += lookVec[2]*10;
             break;
+
         case 's':
-            camPos[0] -= lookVec[0]*5;
-            camPos[1] -= lookVec[1]*5;
-            camPos[2] -= yVec[2]*5;
+            camPos[0] -= lookVec[0]*10;
+            camPos[1] -= lookVec[1]*10;
+            camPos[2] -= lookVec[2]*10;
 
-            look[0] -= lookVec[0]*5;
-            look[1] -= lookVec[1]*5;
-            look[2] -= lookVec[2]*5;
+            look[0] -= lookVec[0]*10;
+            look[1] -= lookVec[1]*10;
+            look[2] -= lookVec[2]*10;
             break;
+
         case 'e':
-            printf("boa noite");
+            camPos[0] += yVec[0]*10;
+            camPos[1] += yVec[1]*10;
+            camPos[2] += yVec[2]*10;
 
-            camPos[0] += yVec[0]*5;
-            camPos[1] += yVec[1]*5;
-            camPos[2] += yVec[2]*5;
-
-            look[0] += yVec[0]*5;
-            look[1] += yVec[1]*5;
-            look[2] += yVec[2]*5;
+            look[0] += yVec[0]*10;
+            look[1] += yVec[1]*10;
+            look[2] += yVec[2]*10;
             break;
-        case 'q':
-            printf("boa tarde");
-            camPos[0] -= yVec[0]*5;
-            camPos[1] -= yVec[1]*5;
-            camPos[2] -= yVec[2]*5;
 
-            look[0] -= yVec[0]*5;
-            look[1] -= yVec[1]*5;
-            look[2] -= yVec[2]*5;
+        case 'q':
+            camPos[0] -= yVec[0]*10;
+            camPos[1] -= yVec[1]*10;
+            camPos[2] -= yVec[2]*10;
+
+            look[0] -= yVec[0]*10;
+            look[1] -= yVec[1]*10;
+            look[2] -= yVec[2]*10;
+            break;
     }
+
+    glutPostRedisplay();
 }
 
 
 void processSpecialKeys(int key, int xx, int yy){
     switch(key){
         case GLUT_KEY_RIGHT:
-            alpha -= 0.1f;
+            alpha -= 0.001f;
+            look[0] = cos(beta)* sin(alpha);
+            look[1] = sin(beta);
+            look[2] = cos(beta) * cos(alpha);
+            cameraOrientarionNewAxis();
             break;
         case GLUT_KEY_LEFT:
-            alpha += 0.1f;
+            alpha += 0.001f;
+            look[0] = cos(beta)* sin(alpha);
+            look[1] = sin(beta);
+            look[2] = cos(beta) * cos(alpha);
+            cameraOrientarionNewAxis();
+
             break;
         case GLUT_KEY_UP:
-            beta += 0.1f;
+            beta += 0.001f;
             if (beta > 1.5f)
                 beta = 1.5f;
+            look[0] = cos(beta)* sin(alpha);
+            look[1] = sin(beta);
+            look[2] = cos(beta) * cos(alpha);
+            cameraOrientarionNewAxis();
             break;
+
         case GLUT_KEY_DOWN:
-            beta -= 0.1f;
+            beta -= 0.001f;
             if (beta < -1.5f)
                 beta = -1.5f;
-            break;
-        case GLUT_KEY_PAGE_DOWN:
-            radius -= 10.0f;
-            if(radius < 0.1f)
-                radius = 1.0f;
-            break;
-        case GLUT_KEY_PAGE_UP:
-            radius += 10.0f;
+            look[0] = cos(beta)* sin(alpha);
+            look[1] = sin(beta);
+            look[2] = cos(beta) * cos(alpha);
+            cameraOrientarionNewAxis();
             break;
     }
     glutPostRedisplay();
@@ -375,8 +408,8 @@ void getGlobalCatmullRomPoint(float gt, float *pos, float *deriv) {
     indices[2] = (indices[1]+1)%n_points;
     indices[3] = (indices[2]+1)%n_points;
 
-   //for(int i = 0; i < xmlParse->controlPoints.size(); i++){
-        //rintf("Ponto %d: %f %f %f\n", i, xmlParse->controlPoints.at(i)[0], xmlParse->controlPoints.at(i)[1], xmlParse->controlPoints.at(i)[2]);
+    //for(int i = 0; i < xmlParse->controlPoints.size(); i++){
+    //rintf("Ponto %d: %f %f %f\n", i, xmlParse->controlPoints.at(i)[0], xmlParse->controlPoints.at(i)[1], xmlParse->controlPoints.at(i)[2]);
     //}
 
     float* p0 = xmlParse->controlPoints.at(current_index + indices[0]);
@@ -586,12 +619,7 @@ void setToZeroAllPlanetsAngle(){
 
 int main(int argc, char** argv) {
 
-    calculateVec(look, camPos, lookVec);
-    normalize(lookVec);
-    cross(lookVec, up, r);
-    normalize(r);
-    cross(r, lookVec, yVec);
-    normalize(yVec);
+    GLdouble aux_p[3];
 
     // init GLUT and the window
     glutInit(&argc, argv);
@@ -602,6 +630,39 @@ int main(int argc, char** argv) {
     filename = argv[1];
     //readXML();
     xmlParse->readXML(filename);
+
+    look[0] = xmlParse->x2;
+    look[1] = xmlParse->y2;
+    look[2] = xmlParse->z2;
+
+    camPos[0] = xmlParse->x1;
+    camPos[1] = xmlParse->t1;
+    camPos[2] = xmlParse->z1;
+
+    cameraOrientarionNewAxis();
+
+    aux_p[0] = camPos[0] + lookVec[0];
+    aux_p[1] = camPos[1] + lookVec[1];
+    aux_p[2] = camPos[2] + lookVec[2];
+
+    beta = asin(aux_p[1] - camPos[1]);
+
+    float tmp = (aux_p[2] - camPos[2]) / cos(beta);
+    
+    if (tmp < -1 || tmp > 1)
+        if(tmp < -1)
+            alpha = acos(-1);
+        else
+            alpha = acos(1);
+    else
+        alpha = acos((aux_p[2] - camPos[2]) / cos(beta));
+
+
+
+    //beta = beta * 180.0 / M_PI;
+    //alpha = alpha * 180.0 / M_PI;
+
+
     diferent_models();
 
     GLuint aux[models.size()+1];

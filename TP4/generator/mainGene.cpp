@@ -249,24 +249,41 @@ void writePlane(int length, int divisions, char* fileName) {
     float startxFixo = startx;
     float startz = length / static_cast<float>(2);
     float startzFixo = startz;
+    float text_ind_x = 0.0f, text_ind_y = 0.0f;
+
+    float text_step = 1.0f / divisions;
 
 
-    for (int j = 0; j < divisions; j++) {
+    for (int j = 0; j < divisions; j++, text_ind_y += text_step) {
 
         startz = startzFixo - (j * size);
 
-        for (int i = 0; i < divisions; i++) {
+        for (int i = 0; i < divisions; i++ , text_ind_x += text_ind_x) {
 
             startx = startxFixo + (i * size);
+
+            /* coordenadas de textura */
+            MyFile << text_ind_x << ";" << text_ind_y << ";";
+            MyFile << text_ind_x + text_step << ";" << text_ind_y << ";";
+            MyFile << text_ind_x + text_step << ";" << text_ind_y + text_step << ";" << std::endl;
+
 
             MyFile << startx << ";" << 0 << ";" << startz << ";";
             MyFile << startx + size << ";" << 0 << ";" << startz << ";";
             MyFile << startx + size << ";" << 0 << ";" << startz - size << std::endl;
 
+            /* coordenadas de textura */
+            MyFile << text_ind_x << ";" << text_ind_y << ";";
+            MyFile << text_ind_x + text_step << ";" << text_ind_y + text_step << ";";
+            MyFile << text_ind_x  << ";" << text_ind_y + text_step << ";" << std::endl;
+
             MyFile << startx << ";" << 0 << ";" << startz << ";";
             MyFile << startx + size << ";" << 0 << ";" << startz - size << ";";
             MyFile << startx << ";" << 0 << ";" << startz - size << std::endl;
+
         }
+
+        text_ind_x = 0.0f;
     }
 
     MyFile.close();
@@ -407,7 +424,7 @@ void writeCube(int length, int divisions, char* fileName) {
     startx = -(length / static_cast<float>(2));
     float endx = startx + length;
 
-    startz = -(length / static_cast<float>(2));
+    startz = (length / static_cast<float>(2));
     startzFixo = startz;
 
     starty = -(length / static_cast<float>(2));
@@ -415,32 +432,38 @@ void writeCube(int length, int divisions, char* fileName) {
 
 
     for (int j = 0; j < divisions; j++) {
-        startz = startzFixo + (j * size);
+        starty = startYfixo + (j * size);
 
 
         for (int i = 0; i < divisions; i++) {
-            starty = startYfixo + (i * size);
+            startz = startzFixo - (i * size);
+
 
             // ------- LADO 1
 
-            MyFile << startx << ";" << starty << ";" << startz + size << ";";
-            MyFile << startx << ";" << starty + size << ";" << startz << ";";
-            MyFile << startx << ";" << starty << ";" << startz << std::endl;
+            //front-right
 
-            MyFile << startx << ";" << starty + size << ";" << startz << ";";
-            MyFile << startx << ";" << starty << ";" << startz + size << ";";
-            MyFile << startx << ";" << starty + size << ";" << startz + size << std::endl;
+            MyFile << endx << ";" << starty << ";" << startz<< ";";
+            MyFile << endx << ";" << starty << ";" << startz-size << ";";
+            MyFile << endx << ";" << starty+size << ";" << startz -size << std::endl;
+
+            MyFile << endx << ";" << starty << ";" << startz << ";";
+            MyFile << endx << ";" << starty +size << ";" << startz - size << ";";
+            MyFile << endx << ";" << starty + size << ";" << startz << std::endl;
 
 
             // ------- LADO 2
 
-            MyFile << endx << ";" << starty + size << ";" << startz + size << ";";
-            MyFile << endx << ";" << starty << ";" << startz + size << ";";
-            MyFile << endx << ";" << starty + size << ";" << startz << std::endl;
+            //back-left
+            MyFile << startx << ";" << starty << ";" << startz << ";";
+            MyFile << startx << ";" << starty + size << ";" << startz-size << ";";
+            MyFile << startx << ";" << starty << ";" << startz - size << std::endl;
 
-            MyFile << endx << ";" << starty << ";" << startz << ";";
-            MyFile << endx << ";" << starty + size << ";" << startz << ";";
-            MyFile << endx << ";" << starty << ";" << startz + size << std::endl;
+            MyFile << startx << ";" << starty << ";" << startz << ";";
+            MyFile << startx << ";" << starty+ size << ";" << startz  << ";";
+            MyFile << startx << ";" << starty + size << ";" << startz -size << std::endl;
+
+
 
             
 

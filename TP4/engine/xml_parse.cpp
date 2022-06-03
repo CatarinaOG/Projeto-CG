@@ -103,16 +103,96 @@ void  xml_parse::readTransformations(TiXmlElement* l_group){
             TiXmlElement* l_nested_group = l_element;
             readTransformations(l_nested_group);
         }else{
-            TiXmlElement* l_models = l_element;
-            TiXmlElement* l_model = l_models->FirstChildElement();
+            if (strcmp(l_element->Value(), "lights") == 0){
+                TiXmlElement* l_lights = l_element;
+                TiXmlElement* l_light = l_lights->FirstChildElement();
 
-            while (l_model != NULL){
-                const char* model = strdup(l_model->Attribute("file"));
-                models.push_back(model);
-                transformations.push_back(6.0f);
-                l_model = l_model->NextSiblingElement();
+                while(l_light != NULL){
+
+                    const char* light_type = l_light->Attribute("type");
+
+                    if(strcmp(light_type,"point") == 0){
+                        const int pointPosX = atoi(l_light->Attribute("posX"));
+                        const int pointPosY = atoi(l_light->Attribute("posY"));
+                        const int pointPosZ = atoi(l_light->Attribute("posZ"));
+                    }
+                    else if(strcmp(light_type,"directional") == 0){
+                        const int directionalDirX = atoi(l_light->Attribute("dirX"));
+                        const int directionalDirY = atoi(l_light->Attribute("dirY"));
+                        const int directionalDirZ = atoi(l_light->Attribute("dirZ"));
+                    }
+                    else {
+                        const int spotlightPosX = atoi(l_light->Attribute("posX"));
+                        const int spotlightPosY = atoi(l_light->Attribute("posY"));
+                        const int spotlightPosZ = atoi(l_light->Attribute("posZ"));
+
+                        const int spotlightDirX = atoi(l_light->Attribute("dirX"));
+                        const int spotlightDirY = atoi(l_light->Attribute("dirY"));
+                        const int spotlightDirZ = atoi(l_light->Attribute("dirZ"));
+
+                        const int spotlightCutOff = atoi(l_light->Attribute("cutoff"));
+                    }
+
+                    l_light = l_light->NextSiblingElement();
+                }
+
+
             }
+            else{
+                TiXmlElement* l_models = l_element;
+                TiXmlElement* l_model = l_models->FirstChildElement();
 
+                while (l_model != NULL){
+                    const char* model = strdup(l_model->Attribute("file"));
+                    models.push_back(model);
+                    transformations.push_back(6.0f);
+
+                    TiXmlElement* l_model_propriety = l_model->FirstChildElement();
+
+                    while(l_model_propriety != NULL) {
+                        if (strcmp(l_model_propriety->Value(), "texture") == 0) {
+                            TiXmlElement *l_model_texture = l_model_propriety;
+                            const char *textureFile = strdup(l_model_texture->Attribute("file"));
+                        }
+                        else{
+                            TiXmlElement* l_model_color = l_model_propriety;
+                            TiXmlElement* l_model_color_propriety = l_model->FirstChildElement();
+
+                            while(l_model_color_propriety != NULL){
+
+                                if (strcmp(l_model_color_propriety->Value(), "diffuse") == 0){
+                                    const int diffuseR = atoi(l_model_color_propriety->Attribute("R"));
+                                    const int diffuseG = atoi(l_model_color_propriety->Attribute("G"));
+                                    const int diffuseB = atoi(l_model_color_propriety->Attribute("B"));
+                                }
+                                else if (strcmp(l_model_color_propriety->Value(), "ambient") == 0){
+                                    const int ambientR = atoi(l_model_color_propriety->Attribute("R"));
+                                    const int ambientG = atoi(l_model_color_propriety->Attribute("G"));
+                                    const int ambientB = atoi(l_model_color_propriety->Attribute("B"));
+                                }
+                                else if (strcmp(l_model_color_propriety->Value(), "specular") == 0){
+                                    const int specularR = atoi(l_model_color_propriety->Attribute("R"));
+                                    const int specularG = atoi(l_model_color_propriety->Attribute("G"));
+                                    const int specularB = atoi(l_model_color_propriety->Attribute("B"));
+                                }
+                                else if (strcmp(l_model_color_propriety->Value(), "emissive") == 0){
+                                    const int emissiveR = atoi(l_model_color_propriety->Attribute("R"));
+                                    const int emissiveG = atoi(l_model_color_propriety->Attribute("G"));
+                                    const int emissiveB = atoi(l_model_color_propriety->Attribute("B"));
+                                }
+                                else{
+                                    const int shininessR = atoi(l_model_color_propriety->Attribute("R"));
+                                    const int shininessG = atoi(l_model_color_propriety->Attribute("G"));
+                                    const int shininessB = atoi(l_model_color_propriety->Attribute("B"));
+                                }
+
+                                l_model_color_propriety = l_model_color_propriety->NextSiblingElement();
+                            }
+                        }
+                        l_model_propriety = l_model_propriety->NextSiblingElement();
+                    }
+                }
+            }
         }
         l_element = l_element->NextSiblingElement(); //avançar o elemento XML
     }
@@ -127,8 +207,9 @@ void xml_parse::readCamera(TiXmlElement* l_pRootElement){
         TiXmlElement* l_position = l_camera->FirstChildElement("position");
 
         x1 = std::stod(l_position->Attribute("x"));
-        z1 = std::stod(l_position->Attribute("z"));
         t1 = std::stod(l_position->Attribute("y"));
+        z1 = std::stod(l_position->Attribute("z"));
+
 
         TiXmlElement* l_lookAt = l_camera->FirstChildElement("lookAt");
 
