@@ -132,6 +132,7 @@ void cameraOrientarionNewAxis(){
 
 void processKeys(unsigned char c, int xx, int yy) {
 
+    int stride = 1;
 // put code to process regular keys in here
     switch(c){
         case 'l':
@@ -148,63 +149,63 @@ void processKeys(unsigned char c, int xx, int yy) {
             break;
         case 'd':
 
-            camPos[0] += r[0]*10;
-            camPos[1] += r[1]*10;
-            camPos[2] += r[2]*10;
+            camPos[0] += r[0]*stride;
+            camPos[1] += r[1]*stride;
+            camPos[2] += r[2]*stride;
 
-            look[0] += r[0]*10;
-            look[1] += r[1]*10;
-            look[2] += r[2]*10;
+            look[0] += r[0]*stride;
+            look[1] += r[1]*stride;
+            look[2] += r[2]*stride;
             break;
 
         case 'a':
-            camPos[0] -= r[0]*10;
-            camPos[1] -= r[1]*10;
-            camPos[2] -= r[2]*10;
+            camPos[0] -= r[0]*stride;
+            camPos[1] -= r[1]*stride;
+            camPos[2] -= r[2]*stride;
 
-            look[0] -= r[0]*10;
-            look[1] -= r[1]*10;
-            look[2] -= r[2]*10;
+            look[0] -= r[0]*stride;
+            look[1] -= r[1]*stride;
+            look[2] -= r[2]*stride;
             break;
 
         case 'w':
-            camPos[0] += lookVec[0]*10;
-            camPos[1] += lookVec[1]*10;
-            camPos[2] += lookVec[2]*10;
+            camPos[0] += lookVec[0]*stride;
+            camPos[1] += lookVec[1]*stride;
+            camPos[2] += lookVec[2]*stride;
 
-            look[0] += lookVec[0]*10;
-            look[1] += lookVec[1]*10;
-            look[2] += lookVec[2]*10;
+            look[0] += lookVec[0]*stride;
+            look[1] += lookVec[1]*stride;
+            look[2] += lookVec[2]*stride;
             break;
 
         case 's':
-            camPos[0] -= lookVec[0]*10;
-            camPos[1] -= lookVec[1]*10;
-            camPos[2] -= lookVec[2]*10;
+            camPos[0] -= lookVec[0]*stride;
+            camPos[1] -= lookVec[1]*stride;
+            camPos[2] -= lookVec[2]*stride;
 
-            look[0] -= lookVec[0]*10;
-            look[1] -= lookVec[1]*10;
-            look[2] -= lookVec[2]*10;
+            look[0] -= lookVec[0]*stride;
+            look[1] -= lookVec[1]*stride;
+            look[2] -= lookVec[2]*stride;
             break;
 
         case 'e':
-            camPos[0] += yVec[0]*10;
-            camPos[1] += yVec[1]*10;
-            camPos[2] += yVec[2]*10;
+            camPos[0] += yVec[0]*stride;
+            camPos[1] += yVec[1]*stride;
+            camPos[2] += yVec[2]*stride;
 
-            look[0] += yVec[0]*10;
-            look[1] += yVec[1]*10;
-            look[2] += yVec[2]*10;
+            look[0] += yVec[0]*stride;
+            look[1] += yVec[1]*stride;
+            look[2] += yVec[2]*stride;
             break;
 
         case 'q':
-            camPos[0] -= yVec[0]*10;
-            camPos[1] -= yVec[1]*10;
-            camPos[2] -= yVec[2]*10;
+            camPos[0] -= yVec[0]*stride;
+            camPos[1] -= yVec[1]*stride;
+            camPos[2] -= yVec[2]*stride;
 
-            look[0] -= yVec[0]*10;
-            look[1] -= yVec[1]*10;
-            look[2] -= yVec[2]*10;
+            look[0] -= yVec[0]*stride;
+            look[1] -= yVec[1]*stride;
+            look[2] -= yVec[2]*stride;
             break;
     }
 
@@ -312,26 +313,32 @@ void parser(const char* filename) {
     }
 
     else std::cout << "Unable to open file";
-
-
-    for (std::size_t i = 0; i < out.size(); i += 3) {
-        vertex v1 = {
-                std::stof(out[i]),
-                std::stof(out[i + 1]),
-                std::stof(out[i + 2])
-        };
-        vertices.push_back(v1);
-    }
     vector<float> tmp;
-    for(int i = 0; i < vertices.size(); i++){
-        tmp.push_back(vertices[i].x);
-        tmp.push_back(vertices[i].y);
-        tmp.push_back(vertices[i].z);
+    vector<float> texels;
+    for (std::size_t i = 0; i < out.size(); i += 15) {
+
+
+        for(int ti = 0 ; ti < 6  ; ti++)
+            texels.push_back(std::stof(out[ti]));
+        for(int vi = 0; vi < 9 ; vi++)
+            tmp.push_back(std::stof(out[vi]));
+
     }
 
-    glBindBuffer(GL_ARRAY_BUFFER, buffers[filesRead.size()-1]);
+
+
+
+
+    /* Bind buffer com o pontos */
+    glBindBuffer(GL_ARRAY_BUFFER, buffers[2*(filesRead.size()-1)]);
     glVertexPointer(3, GL_FLOAT, 0, 0);
     glBufferData(GL_ARRAY_BUFFER, tmp.size()*sizeof(float), tmp.data(), GL_STATIC_DRAW);
+
+    /* bind buffer com coordendas de texturas */
+    glBindBuffer(GL_ARRAY_BUFFER, buffers[2*(filesRead.size()-1)+1]);
+    glBufferData(GL_ARRAY_BUFFER, texels.size()*sizeof(float), texels.data(), GL_STATIC_DRAW);
+
+
 
     sizes.push_back(tmp.size());
 
@@ -342,9 +349,13 @@ void parser(const char* filename) {
 void drawPrimitive(int fileIndex){
     glColor3f(1.0f, 1.0f, 1.0f);
 
-    glBindBuffer(GL_ARRAY_BUFFER, buffers[fileIndex]);
+    glBindBuffer(GL_ARRAY_BUFFER, buffers[2*fileIndex]);
     glVertexPointer(3, GL_FLOAT, 0, 0);
-    glDrawArrays(GL_TRIANGLES, 0, sizes.at(fileIndex));
+
+    glBindBuffer(GL_ARRAY_BUFFER,buffers[2*fileIndex+1]);
+    glTexCoordPointer(2,GL_FLOAT,0,0);
+    glDrawArrays(GL_TRIANGLES, 0, sizes.at(2*fileIndex));
+
 }
 
 
@@ -665,7 +676,7 @@ int main(int argc, char** argv) {
 
     diferent_models();
 
-    GLuint aux[models.size()+1];
+    GLuint aux[2*(models.size()+1)];
     buffers = aux;
     setToZeroAllPlanetsPos();
     setToZeroAllPlanetsAngle();
