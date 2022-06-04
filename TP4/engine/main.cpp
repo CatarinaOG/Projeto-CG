@@ -27,8 +27,8 @@ float yVec[3];
 
 float* r = (float*) malloc(sizeof(float)*3);
 
-
-double alpha /*= 0.0f*/, beta /*= 0.0f*/, radius /*= 5.0f*/;
+float camX = 0, camY = 0, camZ = 0;
+double alpha = 0.0f, beta = 0.0f, radius = 5.0f;
 
 xml_parse* xmlParse = new xml_parse();
 char* filename;
@@ -49,6 +49,7 @@ vector<float> planetsPos;
 vector<float> planetsAngle;
 
 GLuint *buffers;
+GLuint *texBuffer;
 
 vector<int> sizes;
 
@@ -78,11 +79,9 @@ int interval;
 
 bool showCurve = true;
 
-
+GLuint* textIds;
 
 /* variÃ¡veis globais texturas */
-
-
 
 
 void cross(float *a, float *b, float *res) {
@@ -98,9 +97,9 @@ void calculateVec(float p0[3], float p1[3], float res[3]) {
 }
 
 void spherical2Cartesian() {
-    camPos[0] = radius * cos(beta) * sin(alpha);
-    camPos[1] = radius * sin(beta);
-    camPos[2] = radius * cos(beta) * cos(alpha);
+    camX = radius * cos(beta) * sin(alpha);
+    camY = radius * sin(beta);
+    camZ = radius * cos(beta) * cos(alpha);
 }
 
 void buildRotMatrix(float *x, float *y, float *z, float *m) {
@@ -214,8 +213,14 @@ void processKeys(unsigned char c, int xx, int yy) {
             look[1] -= yVec[1]*stride;
             look[2] -= yVec[2]*stride;
             break;
+        case 'u':
+            radius += 1;
+            break;
+        case 'j':
+            radius -= 1;
+            break;
     }
-
+    spherical2Cartesian();
     glutPostRedisplay();
 }
 
@@ -223,40 +228,41 @@ void processKeys(unsigned char c, int xx, int yy) {
 void processSpecialKeys(int key, int xx, int yy){
     switch(key){
         case GLUT_KEY_RIGHT:
-            alpha -= 0.001f;
-            look[0] = cos(beta)* sin(alpha);
-            look[1] = sin(beta);
-            look[2] = cos(beta) * cos(alpha);
-            cameraOrientarionNewAxis();
+            alpha -= 1.0f;
+            //look[0] = cos(beta)* sin(alpha);
+            //look[1] = sin(beta);
+            //look[2] = cos(beta) * cos(alpha);
+            //cameraOrientarionNewAxis();
             break;
         case GLUT_KEY_LEFT:
-            alpha += 0.001f;
-            look[0] = cos(beta)* sin(alpha);
-            look[1] = sin(beta);
-            look[2] = cos(beta) * cos(alpha);
-            cameraOrientarionNewAxis();
+            alpha += 1.0f;
+            //look[0] = cos(beta)* sin(alpha);
+            //look[1] = sin(beta);
+            //look[2] = cos(beta) * cos(alpha);
+            //cameraOrientarionNewAxis();
 
             break;
         case GLUT_KEY_UP:
-            beta += 0.001f;
+            beta += 1.0f;
             if (beta > 1.5f)
                 beta = 1.5f;
-            look[0] = cos(beta)* sin(alpha);
-            look[1] = sin(beta);
-            look[2] = cos(beta) * cos(alpha);
-            cameraOrientarionNewAxis();
+            //look[0] = cos(beta)* sin(alpha);
+            //look[1] = sin(beta);
+            //look[2] = cos(beta) * cos(alpha);
+            //cameraOrientarionNewAxis();
             break;
 
         case GLUT_KEY_DOWN:
-            beta -= 0.001f;
+            beta -= 1.0f;
             if (beta < -1.5f)
                 beta = -1.5f;
-            look[0] = cos(beta)* sin(alpha);
-            look[1] = sin(beta);
-            look[2] = cos(beta) * cos(alpha);
-            cameraOrientarionNewAxis();
+            //look[0] = cos(beta)* sin(alpha);
+            //look[1] = sin(beta);
+            //look[2] = cos(beta) * cos(alpha);
+            //cameraOrientarionNewAxis();
             break;
     }
+    spherical2Cartesian();
     glutPostRedisplay();
 }
 
@@ -356,7 +362,6 @@ void parser(const char* filename) {
     else cout << "Unable to open file";
 
     for (size_t i = 0; i < out.size(); ) {
-
         for(int ti = 0 ; ti < 6  ; ti++)
             texels.push_back(std::stof(out[i + ti]));
         i += 6;
@@ -366,17 +371,20 @@ void parser(const char* filename) {
     }
 
     /* Bind buffer com o pontos */
-    glBindBuffer(GL_ARRAY_BUFFER, buffers[2*(filesRead.size()-1)]);
+    glBindBuffer(GL_ARRAY_BUFFER, buffers[(filesRead.size()-1)]);
     glVertexPointer(3, GL_FLOAT, 0, 0);
     glBufferData(GL_ARRAY_BUFFER, tmp.size()*sizeof(float), tmp.data(), GL_STATIC_DRAW);
 
     /* bind buffer com coordendas de texturas */
-    glBindBuffer(GL_ARRAY_BUFFER, buffers[2*(filesRead.size()-1)+1]);
+    textIds[filesRead.size()-1] = loadTex(xmlParse->modelsTexAndColors[filesRead.size()-1]->texFile);
+
+    glBindBuffer(GL_ARRAY_BUFFER, texBuffer[(filesRead.size()-1)]);
     glTexCoordPointer(2,GL_FLOAT,0,0);
     glBufferData(GL_ARRAY_BUFFER, texels.size()*sizeof(float), texels.data(), GL_STATIC_DRAW);
 
     sizes.push_back(tmp.size());
     sizes.push_back(texels.size());
+
 
     vertices.clear();
 }
@@ -385,22 +393,20 @@ void parser(const char* filename) {
 void drawPrimitive(int fileIndex){
     glColor3f(1.0f, 1.0f, 1.0f);
 
-    GLuint textID = loadTex(xmlParse->modelsTexAndColors[fileIndex]->texFile);
-
     /* carregar textura */
-    glBindTexture(GL_TEXTURE_2D, textID);
+    glBindTexture(GL_TEXTURE_2D, textIds[fileIndex]);
 
     /* carregar vertices */
-    glBindBuffer(GL_ARRAY_BUFFER, buffers[2*fileIndex]);
+    glBindBuffer(GL_ARRAY_BUFFER, buffers[fileIndex]);
     glVertexPointer(3, GL_FLOAT, 0, 0);
     //glDrawArrays(GL_TRIANGLES, 0, sizes.at(2*fileIndex));
 
     /* carregar coordenadas de textura */
-    glBindBuffer(GL_ARRAY_BUFFER,buffers[2*fileIndex+1]);
+    glBindBuffer(GL_ARRAY_BUFFER, texBuffer[fileIndex]);
     glTexCoordPointer(2,GL_FLOAT,0,0);
 
     /* desenhar os arrays */
-    glDrawArrays(GL_TRIANGLES, 0, sizes.at(2*fileIndex));
+    glDrawArrays(GL_TRIANGLES, 0, (sizes.at(2*fileIndex))/3);
 
 }
 
@@ -623,7 +629,7 @@ void renderScene(void) {
     // set the camera
     glLoadIdentity();
 
-    gluLookAt(camPos[0], camPos[1], camPos[2],
+    gluLookAt(camX, camY, camZ,
               look[0], look[1], look[2],
               up[0], up[1], up[2]);
 
@@ -720,8 +726,13 @@ int main(int argc, char** argv) {
 
     diferent_models();
 
-    GLuint aux[2*(models.size()+1)];
+    GLuint aux[models.size()];
+    GLuint auxTex[models.size()];
     buffers = aux;
+    texBuffer = auxTex;
+
+    textIds = (GLuint*) malloc(sizeof(GLuint) * (models.size()-1));
+
     setToZeroAllPlanetsPos();
     setToZeroAllPlanetsAngle();
 
@@ -747,14 +758,15 @@ int main(int argc, char** argv) {
     glEnable(GL_CULL_FACE);
     glEnable(GL_TEXTURE_2D);
 
+
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     // enter GLUT's main cycle
-    glGenBuffers(models.size()+1, buffers);
+    glGenBuffers(models.size(), buffers);
+    glGenBuffers(models.size(), texBuffer);
     glutMainLoop();
 
     return 1;

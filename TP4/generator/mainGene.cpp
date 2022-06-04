@@ -733,9 +733,12 @@ void writeSphere(float radius, int slices, int stacks, char* filename) {
 
     float x, y, z;
 
-    for (int currStack = 0; currStack < stacks; currStack++) {
+    float tex_ind_x = 1.0f, tex_ind_y = 1.0f;
+    float tex_step_x = 1.0f / slices, tex_step_y = 1.0f / stacks;
+
+    for (int currStack = 0; currStack < stacks; currStack++, tex_ind_y -= tex_step_y) {
         //int currStack = 3;
-        for (int currSlice = 0; currSlice < slices; currSlice++) {
+        for (int currSlice = 0; currSlice < slices; currSlice++, tex_ind_x += tex_step_x) {
             vertex v1 = assignCoords(radius, currStack, currSlice, i_beta, d_beta, d_alpha);
             vertex v2 = assignCoords(radius, currStack + 1, currSlice, i_beta, d_beta, d_alpha);
             vertex v3 = assignCoords(radius, currStack + 1, currSlice + 1, i_beta, d_beta, d_alpha);
@@ -744,16 +747,35 @@ void writeSphere(float radius, int slices, int stacks, char* filename) {
 
             //1� triangulo
 
+            //coordenadas de textura
+
+            Myfile << tex_ind_x << ";" << tex_ind_y << ";";
+            Myfile << tex_ind_x << ";" << tex_ind_y - tex_step_y << ";";
+            Myfile << tex_ind_x + tex_step_x << ";" << tex_ind_y - tex_step_y << std::endl;
+
+            //coordenadas
+
             Myfile << v1.x << ";" << v1.y << ";" << v1.z << ";";
             Myfile << v2.x << ";" << v2.y << ";" << v2.z << ";";
             Myfile << v3.x << ";" << v3.y << ";" << v3.z << std::endl;
 
+
             //2� triangulo
+
+            //coordenadas de textura
+
+            Myfile << tex_ind_x << ";" << tex_ind_y << ";";
+            Myfile << tex_ind_x + tex_step_x << ";" << tex_ind_y - tex_step_y << ";";
+            Myfile << tex_ind_x + tex_step_x << ";" << tex_ind_y << std::endl;
+
+
+            //coordenadas
 
             Myfile << v1.x << ";" << v1.y << ";" << v1.z << ";";
             Myfile << v3.x << ";" << v3.y << ";" << v3.z << ";";
             Myfile << v4.x << ";" << v4.y << ";" << v4.z << std::endl;
         }
+        tex_ind_x = 0;
     }
     Myfile.close();
 }
