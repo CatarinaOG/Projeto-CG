@@ -258,7 +258,7 @@ void writePlane(int length, int divisions, char* fileName) {
 
         startz = startzFixo - (j * size);
 
-        for (int i = 0; i < divisions; i++ , text_ind_x += text_ind_x) {
+        for (int i = 0; i < divisions; i++ , text_ind_x += text_step) {
 
             startx = startxFixo + (i * size);
 
@@ -268,6 +268,7 @@ void writePlane(int length, int divisions, char* fileName) {
             MyFile << text_ind_x + text_step << ";" << text_ind_y + text_step << ";" << std::endl;
 
 
+            /* coordenadas de Vertice */
             MyFile << startx << ";" << 0 << ";" << startz << ";";
             MyFile << startx + size << ";" << 0 << ";" << startz << ";";
             MyFile << startx + size << ";" << 0 << ";" << startz - size << std::endl;
@@ -277,6 +278,8 @@ void writePlane(int length, int divisions, char* fileName) {
             MyFile << text_ind_x + text_step << ";" << text_ind_y + text_step << ";";
             MyFile << text_ind_x  << ";" << text_ind_y + text_step << ";" << std::endl;
 
+
+            /* coordenadas de Vertice */
             MyFile << startx << ";" << 0 << ";" << startz << ";";
             MyFile << startx + size << ";" << 0 << ";" << startz - size << ";";
             MyFile << startx << ";" << 0 << ";" << startz - size << std::endl;
@@ -331,6 +334,8 @@ void writeCube(int length, int divisions, char* fileName) {
 
     std::ofstream MyFile(fileName);
 
+    float text_ind_x = 0.0f, text_ind_y = 0.0f;
+
 
     // ------------------ BASES CUBO
 
@@ -341,6 +346,7 @@ void writeCube(int length, int divisions, char* fileName) {
     float startzFixo = startz;
     float bottomY = -(length / static_cast<float>(2));
     float topY = bottomY + length;
+    float step_text = 1.0f / divisions;
 
 
     for (int j = 0; j < divisions; j++) {
@@ -351,28 +357,63 @@ void writeCube(int length, int divisions, char* fileName) {
 
             startx = startxFixo + (i * size);
 
-            // ------------------ BASES 1
 
+            // BASE 1
+
+            // ---- Coordenadas de textura
+
+            MyFile << text_ind_x << ";" <<  text_ind_y << ";";
+            MyFile << text_ind_x + step_text << ";" << text_ind_y + step_text << ";";
+            MyFile << text_ind_x + step_text << ";" <<  text_ind_y  << std::endl;
+
+            // coordenadas
             MyFile << startx << ";" << bottomY << ";" << startz << ";";
             MyFile << startx + size << ";" << bottomY << ";" << startz - size << ";";
             MyFile << startx + size << ";" << bottomY << ";" << startz << std::endl;
+
+
+            // ---- Coordenadas de textura
+
+            MyFile << text_ind_x << ";" <<  text_ind_y << ";";
+            MyFile << text_ind_x << ";" << text_ind_y + step_text << ";";
+            MyFile << text_ind_x + step_text << ";" <<  text_ind_y + step_text << std::endl;
+
+            // ----- coordenadas
 
             MyFile << startx << ";" << bottomY << ";" << startz << ";";
             MyFile << startx << ";" << bottomY << ";" << startz - size << ";";
             MyFile << startx + size << ";" << bottomY << ";" << startz - size << std::endl;
 
 
+
             // ------------------ BASES 2
 
+            // ---- Coordenadas de textura
+
+            MyFile << text_ind_x << ";" <<  text_ind_y << ";";
+            MyFile << text_ind_x + step_text << ";" << text_ind_y  << ";";
+            MyFile << text_ind_x + step_text << ";" <<  text_ind_y  + step_text << std::endl;
+
+            // coordenadas
             MyFile << startx << ";" << topY << ";" << startz << ";";
             MyFile << startx + size << ";" << topY << ";" << startz << ";";
             MyFile << startx + size << ";" << topY << ";" << startz - size << std::endl;
 
+            // ---- Coordenadas de textura
+
+            MyFile << text_ind_x << ";" <<  text_ind_y << ";";
+            MyFile << text_ind_x + step_text << ";" << text_ind_y + step_text << ";";
+            MyFile << text_ind_x  << ";" <<  text_ind_y + step_text << std::endl;
+            //coordenadas
             MyFile << startx << ";" << topY << ";" << startz << ";";
             MyFile << startx + size << ";" << topY << ";" << startz - size << ";";
             MyFile << startx << ";" << topY << ";" << startz - size << std::endl;
+            text_ind_x += step_text;
         }
+        text_ind_y += step_text;
+        text_ind_x = 0;
     }
+    text_ind_y = 0;
 
     // ---------------- front left back AND right-------------------
 
@@ -395,10 +436,22 @@ void writeCube(int length, int divisions, char* fileName) {
             startx = startxFixo + (i * size);
 
             //---------------------------- FACE 1
-
+            // coordendasd de textura
+            MyFile << text_ind_x << ";" <<  text_ind_y << ";";
+            MyFile << text_ind_x + step_text << ";" << text_ind_y  << ";";
+            MyFile << text_ind_x  << ";" <<  text_ind_y + step_text << std::endl;
+            //coordenadas
             MyFile << startx << ";" << starty << ";" << startz << ";";
             MyFile << startx + size << ";" << starty << ";" << startz << ";";
             MyFile << startx << ";" << starty + size << ";" << startz << std::endl;
+
+
+            // coordendasd de textura
+            MyFile << text_ind_x << ";" <<  text_ind_y + step_text<< ";";
+            MyFile << text_ind_x + step_text << ";" << text_ind_y  << ";";
+            MyFile << text_ind_x + step_text << ";" <<  text_ind_y + step_text << std::endl;
+
+            // coordenadas
 
             MyFile << startx << ";" << starty + size << ";" << startz << ";";
             MyFile << startx + size << ";" << starty << ";" << startz << ";";
@@ -406,16 +459,35 @@ void writeCube(int length, int divisions, char* fileName) {
 
 
             //---------------------------- FACE 2
+            // coordenadas de textura
+            MyFile << text_ind_x << ";" <<  text_ind_y << ";";
+            MyFile << text_ind_x  << ";" << text_ind_y + step_text  << ";";
+            MyFile << text_ind_x + step_text << ";" <<  text_ind_y  << std::endl;
+
+            //coordenadas
 
             MyFile << startx << ";" << starty << ";" << endz << ";";
             MyFile << startx << ";" << starty + size << ";" << endz << ";";
             MyFile << startx + size << ";" << starty << ";" << endz << std::endl;
 
+            // coordendasd de textura
+            MyFile << text_ind_x << ";" <<  text_ind_y + step_text<< ";";
+            MyFile << text_ind_x + step_text << ";" << text_ind_y + step_text  << ";";
+            MyFile << text_ind_x + step_text << ";" <<  text_ind_y << std::endl;
+
+            //coordenadas
+
             MyFile << startx << ";" << starty + size << ";" << endz << ";";
             MyFile << startx + size << ";" << starty + size << ";" << endz << ";";
             MyFile << startx + size << ";" << starty << ";" << endz << std::endl;
+            text_ind_x += step_text;
         }
+        text_ind_y += step_text;
+        text_ind_x = 0;
     }
+
+
+    text_ind_y = 0;
 
 
     // ------ front right / back left-------
@@ -443,9 +515,21 @@ void writeCube(int length, int divisions, char* fileName) {
 
             //front-right
 
+            // coordendasd de textura
+            MyFile << text_ind_x << ";" <<  text_ind_y << ";";
+            MyFile << text_ind_x + step_text << ";" << text_ind_y << ";";
+            MyFile << text_ind_x  + step_text << ";" <<  text_ind_y + step_text << std::endl;
+
+
+
             MyFile << endx << ";" << starty << ";" << startz<< ";";
             MyFile << endx << ";" << starty << ";" << startz-size << ";";
             MyFile << endx << ";" << starty+size << ";" << startz -size << std::endl;
+
+            // coordendasd de textura
+            MyFile << text_ind_x << ";" <<  text_ind_y << ";";
+            MyFile << text_ind_x  + step_text << ";" << text_ind_y  + step_text<< ";";
+            MyFile << text_ind_x << ";" <<  text_ind_y + step_text << std::endl;
 
             MyFile << endx << ";" << starty << ";" << startz << ";";
             MyFile << endx << ";" << starty +size << ";" << startz - size << ";";
@@ -455,22 +539,48 @@ void writeCube(int length, int divisions, char* fileName) {
             // ------- LADO 2
 
             //back-left
+            // coordendasd de textura
+            MyFile << text_ind_x << ";" <<  text_ind_y << ";";
+            MyFile << text_ind_x + step_text << ";" << text_ind_y + step_text << ";";
+            MyFile << text_ind_x + step_text  << ";" <<  text_ind_y << std::endl;
+
+
             MyFile << startx << ";" << starty << ";" << startz << ";";
             MyFile << startx << ";" << starty + size << ";" << startz-size << ";";
             MyFile << startx << ";" << starty << ";" << startz - size << std::endl;
 
+            // coordendasd de textura
+            MyFile << text_ind_x << ";" <<  text_ind_y << ";";
+            MyFile << text_ind_x << ";" << text_ind_y + step_text << ";";
+            MyFile << text_ind_x + step_text<< ";" <<  text_ind_y + step_text << std::endl;
+
             MyFile << startx << ";" << starty << ";" << startz << ";";
             MyFile << startx << ";" << starty+ size << ";" << startz  << ";";
             MyFile << startx << ";" << starty + size << ";" << startz -size << std::endl;
-
-
-
-            
-
+            text_ind_x += step_text;
         }
+        text_ind_y += step_text;
+        text_ind_x = 0;
     }
 
     MyFile.close();
+}
+
+float* getTexPointsCone(int slice, int stack, int cone_stacks, int cone_slices, float* points){
+
+    float x1 = points[stack];
+    float x2 = points[stack+1];
+    //float cycle_var = stack / (2*cone_stacks);
+    float tex_steplower = (1 - (2*x1))/ cone_slices;
+    float tex_stephigher = (1 - (2*x2))/ cone_slices;
+
+    float* ret = (float*) malloc(sizeof(float)*4);
+
+    ret[0] = x1 + tex_steplower*slice;
+    ret[1] = x1 + tex_steplower*slice + tex_steplower;
+    ret[2] = x2 + tex_stephigher*slice;
+    ret[3] = x2 + tex_stephigher*slice + tex_stephigher;
+    return ret;
 }
 
 void writeCone(float radius, float height, int cone_slices, int cone_stacks, char* fileName) {
@@ -485,6 +595,24 @@ void writeCone(float radius, float height, int cone_slices, int cone_stacks, cha
         starting_top_angle,
         starting_bottom_angle;
 
+    float i = 0.0f;
+    int index = 0;
+    float* points = (float*) malloc(sizeof(float) * cone_stacks);
+    float cycle_var;
+    float y_step = (1.0f/(float)cone_stacks);
+
+
+    while(index <= cone_stacks){
+        cycle_var = i / (float) (2*cone_stacks);
+        points[index] = cycle_var;
+        printf("%f \n",cycle_var);
+        i++;
+        index++;
+    }
+
+
+
+
     std::ofstream MyFile(fileName);
 
     float radius_step = radius / (float)cone_stacks;
@@ -495,14 +623,26 @@ void writeCone(float radius, float height, int cone_slices, int cone_stacks, cha
     float stack_height = height / (float)cone_stacks;
 
 
+
     float angle_step = (2 * M_PI) / (float)cone_slices;
 
     for (int j = 0; j < cone_slices; j++) {
 
         for (int i = 0; i < cone_stacks; i++) {
 
+            float* getPoints = getTexPointsCone(i, j, cone_stacks, cone_slices, points);
+
             px_bottom = bottom_radius * sin(angle_bottom);
             pz_bottom = bottom_radius * cos(angle_bottom);
+
+            //1º triângulo
+
+            /* coordenadas de textura */
+
+            MyFile << getPoints[1] << ";" << i*y_step << ";";
+            MyFile << getPoints[3] << ";" << i*y_step + y_step << ";";
+            MyFile << getPoints[0] << ";" << i*y_step << std::endl;
+
 
             MyFile << px_bottom << ";" << i * stack_height << ";" << pz_bottom << ";";
 
@@ -520,6 +660,14 @@ void writeCone(float radius, float height, int cone_slices, int cone_stacks, cha
 
             MyFile << px_bottom << ";" << i * stack_height << ";" << pz_bottom << std::endl;
 
+
+            //2º triângulo
+
+            /* coordenadas de textura */
+
+            MyFile << getPoints[0] << ";" << i*y_step << ";"; //esquerda baixo
+            MyFile << getPoints[3] << ";" << i*y_step + y_step << ";"; //direita cima
+            MyFile << getPoints[2] << ";" << i*y_step + y_step << std::endl; // esquerda cima
 
             MyFile << px_bottom << ";" << i * stack_height << ";" << pz_bottom << ";";
 
@@ -550,10 +698,16 @@ void writeCone(float radius, float height, int cone_slices, int cone_stacks, cha
 
     angle_bottom = 0;
 
-    for (int i = 0; i <= cone_slices; i++) {
+    for (int i = 0; i <= cone_slices; i++)
+    {
 
         px_bottom = radius * sin(angle_bottom);
         pz_bottom = radius * cos(angle_bottom);
+
+        //coordenadas de textura
+
+        MyFile << "0;0;1;0;1;1" << std::endl;
+
         MyFile << px_bottom << ";" << 0.0 << ";" << pz_bottom << ";";
 
         angle_bottom -= angle_step;

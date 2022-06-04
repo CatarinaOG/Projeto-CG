@@ -6,6 +6,7 @@
 #include <string>
 #include <GL/glew.h>
 #include <GL/glut.h>
+#include <IL/il.h>
 #endif
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -79,6 +80,10 @@ bool showCurve = true;
 
 
 
+/* variÃ¡veis globais texturas */
+
+
+
 
 void cross(float *a, float *b, float *res) {
     res[0] = a[1]*b[2] - a[2]*b[1];
@@ -122,11 +127,13 @@ void cameraOrientarionNewAxis(){
     normalize(r);
     cross(r, lookVec, yVec);
     normalize(yVec);
+    /*
     printf("look: %f %f %f\n",look[0],look[1],look[2]);
     printf("camPos: %f %f %f\n",camPos[0],camPos[1],camPos[2]);
     printf("lookVec: %f %f %f\n",lookVec[0],lookVec[1],lookVec[2]);
     printf("r: %f %f %f\n",r[0],r[1],r[2]);
     printf("yVec: %f %f %f\n",yVec[0],yVec[1],yVec[2]);
+     */
 
 }
 
@@ -294,6 +301,40 @@ void tokenize(std::string const& str, const char delim,
 }
 
 
+int loadTex(std::string s){
+    unsigned int t, tw, th, texID;
+    unsigned char* texData;
+    ilInit();
+    ilEnable(IL_ORIGIN_SET);
+    ilOriginFunc(IL_ORIGIN_LOWER_LEFT);
+    ilGenImages(1, &t);
+    ilBindImage(t);
+    ilLoadImage((ILstring) s.c_str());
+    tw = ilGetInteger(IL_IMAGE_WIDTH);
+    th = ilGetInteger(IL_IMAGE_HEIGHT);
+    ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
+    texData = ilGetData();
+    glGenTextures(1, &texID);
+    glBindTexture(GL_TEXTURE_2D, texID);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexImage2D(
+            GL_TEXTURE_2D,
+            0,
+            GL_RGBA,
+            tw,
+            th,
+            0,
+            GL_RGBA,
+            GL_UNSIGNED_BYTE,
+            texData);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    return texID;
+}
+
 // parse de ficheiros .3d
 void parser(const char* filename) {
 
@@ -301,33 +342,28 @@ void parser(const char* filename) {
     ifstream myfile(filename);
 
     const char delimiter = ';';
-    std::vector<std::string> out;
 
-    if (myfile.is_open())
-    {
-        while (getline(myfile, line))
-        {
-            tokenize(line, delimiter, out); //ler linha do ficheiro
-        }
-        myfile.close();
-    }
-
-    else std::cout << "Unable to open file";
+    vector<std::string> out;
     vector<float> tmp;
     vector<float> texels;
-    for (std::size_t i = 0; i < out.size(); i += 15) {
 
+    if (myfile.is_open()){
+        while (getline(myfile, line))
+            tokenize(line, delimiter, out); //ler linha do ficheiro
+
+        myfile.close();
+    }
+    else cout << "Unable to open file";
+
+    for (size_t i = 0; i < out.size(); ) {
 
         for(int ti = 0 ; ti < 6  ; ti++)
-            texels.push_back(std::stof(out[ti]));
+            texels.push_back(std::stof(out[i + ti]));
+        i += 6;
         for(int vi = 0; vi < 9 ; vi++)
-            tmp.push_back(std::stof(out[vi]));
-
+            tmp.push_back(std::stof(out[i + vi]));
+        i+=9;
     }
-
-
-
-
 
     /* Bind buffer com o pontos */
     glBindBuffer(GL_ARRAY_BUFFER, buffers[2*(filesRead.size()-1)]);
@@ -336,11 +372,11 @@ void parser(const char* filename) {
 
     /* bind buffer com coordendas de texturas */
     glBindBuffer(GL_ARRAY_BUFFER, buffers[2*(filesRead.size()-1)+1]);
+    glTexCoordPointer(2,GL_FLOAT,0,0);
     glBufferData(GL_ARRAY_BUFFER, texels.size()*sizeof(float), texels.data(), GL_STATIC_DRAW);
 
-
-
     sizes.push_back(tmp.size());
+    sizes.push_back(texels.size());
 
     vertices.clear();
 }
@@ -349,11 +385,21 @@ void parser(const char* filename) {
 void drawPrimitive(int fileIndex){
     glColor3f(1.0f, 1.0f, 1.0f);
 
+    GLuint textID = loadTex(xmlParse->modelsTexAndColors[fileIndex]->texFile);
+
+    /* carregar textura */
+    glBindTexture(GL_TEXTURE_2D, textID);
+
+    /* carregar vertices */
     glBindBuffer(GL_ARRAY_BUFFER, buffers[2*fileIndex]);
     glVertexPointer(3, GL_FLOAT, 0, 0);
+    //glDrawArrays(GL_TRIANGLES, 0, sizes.at(2*fileIndex));
 
+    /* carregar coordenadas de textura */
     glBindBuffer(GL_ARRAY_BUFFER,buffers[2*fileIndex+1]);
     glTexCoordPointer(2,GL_FLOAT,0,0);
+
+    /* desenhar os arrays */
     glDrawArrays(GL_TRIANGLES, 0, sizes.at(2*fileIndex));
 
 }
@@ -396,8 +442,6 @@ void getCatmullRomPoint(float t, float *p0, float *p1, float *p2, float *p3, flo
 
         deriv[i] = tVectorL[0] * a[0] + tVectorL[1] * a[1] + tVectorL[2] * a[2];
     }
-
-    // ...
 }
 
 
@@ -659,7 +703,7 @@ int main(int argc, char** argv) {
     beta = asin(aux_p[1] - camPos[1]);
 
     float tmp = (aux_p[2] - camPos[2]) / cos(beta);
-    
+
     if (tmp < -1 || tmp > 1)
         if(tmp < -1)
             alpha = acos(-1);
@@ -668,11 +712,11 @@ int main(int argc, char** argv) {
     else
         alpha = acos((aux_p[2] - camPos[2]) / cos(beta));
 
-
-
-    //beta = beta * 180.0 / M_PI;
-    //alpha = alpha * 180.0 / M_PI;
-
+    /*
+    printf("%f, %f, %f\n", lights->point[0], lights->point[1], lights->point[2]);
+    printf("%f, %f, %f\n", lights->directional[0], lights->directional[1], lights->directional[2]);
+    printf("%f, %f, %f, %f, %f, %f, %f\n", lights->spotlight[0], lights->spotlight[1], lights->spotlight[2], lights->spotlight[3], lights->spotlight[4], lights->spotlight[5], lights->spotlight[6]);
+    */
 
     diferent_models();
 
@@ -696,12 +740,18 @@ int main(int argc, char** argv) {
     glutReshapeFunc(changeSize);
     glutIdleFunc(renderScene);
 
+    ilInit();
+
     //  OpenGL settings
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnable(GL_TEXTURE_2D);
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     // enter GLUT's main cycle
     glGenBuffers(models.size()+1, buffers);

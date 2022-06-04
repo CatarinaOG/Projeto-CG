@@ -2,19 +2,27 @@
 using namespace  std;
 using namespace myXML;
 
-/*
-void fillAsDefault(TexAndColor texAndColor){
 
-     texAndColor.texFile = "";
-     texAndColor.diffuse = {200,200,200};
-     texAndColor.ambient = {50,50,50};
-     texAndColor.specular = {0,0,0};
-     texAndColor.emissive = {0,0,0};
-     texAndColor.shininess = 0;
+
+void fillAsDefault(TexAndColor* texAndColor){
+
+     texAndColor->texFile = NULL;
+     texAndColor->diffuse[0] = 200;
+     texAndColor->diffuse[1] = 200;
+     texAndColor->diffuse[2] = 200;
+     texAndColor->ambient[0] = 50;
+     texAndColor->ambient[1] = 50;
+     texAndColor->ambient[2] = 50;
+     texAndColor->specular[0] = 0;
+     texAndColor->specular[1] = 0;
+     texAndColor->specular[2] = 0;
+     texAndColor->emissive[0] = 0;
+     texAndColor->emissive[1] = 0;
+     texAndColor->emissive[2] = 0;
+     texAndColor->shineness = 0;
 
  }
 
- */
 
 void  xml_parse::readTransformations(TiXmlElement* l_group){
     transformations.push_back(4.0f); // push_matrix
@@ -111,76 +119,31 @@ void  xml_parse::readTransformations(TiXmlElement* l_group){
             TiXmlElement* l_nested_group = l_element;
             readTransformations(l_nested_group);
         }else{
-            if (strcmp(l_element->Value(), "lights") == 0){
-                TiXmlElement* l_lights = l_element;
-                TiXmlElement* l_light = l_lights->FirstChildElement();
-
-                //lights = malloc(sizeof(Lights));
-
-                while(l_light != NULL){
-
-                    const char* light_type = l_light->Attribute("type");
-
-                    if(strcmp(light_type,"point") == 0){
-                        const int pointPosX = atoi(l_light->Attribute("posX"));
-                        const int pointPosY = atoi(l_light->Attribute("posY"));
-                        const int pointPosZ = atoi(l_light->Attribute("posZ"));
-
-                        //lights.point = {pointPosX, pointPosY, pointPosZ};
-
-                    }
-                    else if(strcmp(light_type,"directional") == 0){
-                        const int directionalDirX = atoi(l_light->Attribute("dirX"));
-                        const int directionalDirY = atoi(l_light->Attribute("dirY"));
-                        const int directionalDirZ = atoi(l_light->Attribute("dirZ"));
-
-                        //lights.directional = {directionalDirX, directionalDirY, directionalDirZ};
-                    }
-                    else {
-                        const int spotlightPosX = atoi(l_light->Attribute("posX"));
-                        const int spotlightPosY = atoi(l_light->Attribute("posY"));
-                        const int spotlightPosZ = atoi(l_light->Attribute("posZ"));
-
-                        const int spotlightDirX = atoi(l_light->Attribute("dirX"));
-                        const int spotlightDirY = atoi(l_light->Attribute("dirY"));
-                        const int spotlightDirZ = atoi(l_light->Attribute("dirZ"));
-
-                        const int spotlightCutOff = atoi(l_light->Attribute("cutoff"));
-
-                        //lights.spotlight = {spotlightPosX, spotlightPosY, spotlightPosZ,
-                        //                    spotlightDirX, spotlightDirY, spotlightDirZ,
-                        //                    spotlightCutOff};
-                    }
-
-                    l_light = l_light->NextSiblingElement();
-                }
-
-
-            }
-            else{
                 TiXmlElement* l_models = l_element;
                 TiXmlElement* l_model = l_models->FirstChildElement();
+                printf("model: %s\n",l_model->Value());
 
-                while (l_model != NULL){
+            while (l_model != NULL){
                     const char* model = strdup(l_model->Attribute("file"));
                     models.push_back(model);
                     transformations.push_back(6.0f);
 
                     TiXmlElement* l_model_propriety = l_model->FirstChildElement();
 
-                    //TexAndColor texAndColor = malloc(sizeof(TextAndColor));
-                    //fillAsDefault(texAndColor);
+                    TexAndColor* texAndColor = (TexAndColor*) malloc(sizeof(struct TexAndColor));
+                    fillAsDefault(texAndColor);
 
                     while(l_model_propriety != NULL) {
-                        if (strcmp(l_model_propriety->Value(), "texture") == 0) {
-                            TiXmlElement *l_model_texture = l_model_propriety;
-                            const char *textureFile = strdup(l_model_texture->Attribute("file"));
-                            //texAndColor.textFile = textureFile;
 
+                        if (strcmp(l_model_propriety->Value(), "texture") == 0) {
+
+                            TiXmlElement *l_model_texture = l_model_propriety;
+                            texAndColor->texFile = strdup(l_model_texture->Attribute("file"));
+                            printf("file: %s\n",l_model_texture->Attribute("file"));
                         }
                         else{
                             TiXmlElement* l_model_color = l_model_propriety;
-                            TiXmlElement* l_model_color_propriety = l_model->FirstChildElement();
+                            TiXmlElement* l_model_color_propriety = l_model_color->FirstChildElement();
 
                             while(l_model_color_propriety != NULL){
 
@@ -189,33 +152,40 @@ void  xml_parse::readTransformations(TiXmlElement* l_group){
                                     const int diffuseG = atoi(l_model_color_propriety->Attribute("G"));
                                     const int diffuseB = atoi(l_model_color_propriety->Attribute("B"));
 
-                                    //texAndColor.diffuse = {diffuseR, diffuseG,diffuseB};
+                                    texAndColor->diffuse[0] = diffuseR;
+                                    texAndColor->diffuse[1] = diffuseG;
+                                    texAndColor->diffuse[2] = diffuseB;
                                 }
                                 else if (strcmp(l_model_color_propriety->Value(), "ambient") == 0) {
                                     const int ambientR = atoi(l_model_color_propriety->Attribute("R"));
                                     const int ambientG = atoi(l_model_color_propriety->Attribute("G"));
                                     const int ambientB = atoi(l_model_color_propriety->Attribute("B"));
 
-                                    //texAndColor.ambient = {ambientR, ambientG,ambientB};
+                                    texAndColor->ambient[0] = ambientR;
+                                    texAndColor->ambient[1] = ambientG;
+                                    texAndColor->ambient[2] = ambientB;
                                 }
                                 else if (strcmp(l_model_color_propriety->Value(), "specular") == 0){
                                     const int specularR = atoi(l_model_color_propriety->Attribute("R"));
                                     const int specularG = atoi(l_model_color_propriety->Attribute("G"));
                                     const int specularB = atoi(l_model_color_propriety->Attribute("B"));
 
-                                    //texAndColor.specular = {specularR, specularG,specularB};
+                                    texAndColor->specular[0] = specularR;
+                                    texAndColor->specular[1] = specularG;
+                                    texAndColor->specular[2] = specularB;
                                 }
                                 else if (strcmp(l_model_color_propriety->Value(), "emissive") == 0) {
                                     const int emissiveR = atoi(l_model_color_propriety->Attribute("R"));
                                     const int emissiveG = atoi(l_model_color_propriety->Attribute("G"));
                                     const int emissiveB = atoi(l_model_color_propriety->Attribute("B"));
 
-                                    //texAndColor.emissive = {emissiveR, emissiveG,emissiveB};
+                                    texAndColor->emissive[0] = emissiveR;
+                                    texAndColor->emissive[1] = emissiveG;
+                                    texAndColor->emissive[2] = emissiveB;
                                 }
                                 else{
-                                    const int shininess = atoi(l_model_color_propriety->Attribute("value"));
-
-                                    //texAndColor.shineness = shininess;
+                                    int shininess = atoi(l_model_color_propriety->Attribute("value"));
+                                    texAndColor->shineness = shininess;
                                 }
 
                                 l_model_color_propriety = l_model_color_propriety->NextSiblingElement();
@@ -224,14 +194,66 @@ void  xml_parse::readTransformations(TiXmlElement* l_group){
                         l_model_propriety = l_model_propriety->NextSiblingElement();
                     }
 
-                    //modelsTexAndColors.push_back(texAndColor);
+                    modelsTexAndColors.push_back(texAndColor);
                     l_model = l_model->NextSiblingElement();
                 }
-            }
         }
         l_element = l_element->NextSiblingElement(); //avançar o elemento XML
     }
     transformations.push_back(5.0f); // pop_matrix
+}
+
+void xml_parse::readLights(TiXmlElement* l_lights){
+
+    TiXmlElement* l_light = l_lights->FirstChildElement();
+
+    while(l_light != NULL){
+        const char* light_type = l_light->Attribute("type");
+
+        if(strcmp(light_type,"point") == 0){
+            float pointPosX = atoi(l_light->Attribute("posx"));
+            float pointPosY = atoi(l_light->Attribute("posy"));
+            float pointPosZ = atoi(l_light->Attribute("posz"));
+
+            lights->point[0] = pointPosX;
+            lights->point[1] = pointPosY;
+            lights->point[2] = pointPosZ;
+
+        }
+        else if(strcmp(light_type,"directional") == 0){
+            float directionalDirX = atof(l_light->Attribute("dirx"));
+            float directionalDirY = atof(l_light->Attribute("diry"));
+            float directionalDirZ = atof(l_light->Attribute("dirz"));
+
+            lights->directional[0] = directionalDirX;
+            lights->directional[1] = directionalDirY;
+            lights->directional[2] = directionalDirZ;
+        }
+        else {
+            float spotlightPosX = atoi(l_light->Attribute("posx"));
+            float spotlightPosY = atoi(l_light->Attribute("posy"));
+            float spotlightPosZ = atoi(l_light->Attribute("posz"));
+
+            float spotlightDirX = atoi(l_light->Attribute("dirx"));
+            float spotlightDirY = atoi(l_light->Attribute("diry"));
+            float spotlightDirZ = atoi(l_light->Attribute("dirz"));
+
+            float spotlightCutOff = atoi(l_light->Attribute("cutoff"));
+
+            lights->spotlight[0] = spotlightPosX;
+            lights->spotlight[1] = spotlightPosY;
+            lights->spotlight[2] = spotlightPosZ;
+
+            lights->spotlight[3] = spotlightDirX;
+            lights->spotlight[4] = spotlightDirY;
+            lights->spotlight[5] = spotlightDirZ;
+
+            lights->spotlight[6] = spotlightCutOff;
+        }
+
+        l_light = l_light->NextSiblingElement();
+    }
+
 }
 
 void xml_parse::readCamera(TiXmlElement* l_pRootElement){
@@ -280,8 +302,13 @@ void xml_parse::readXML(char* filename) {
 
             readCamera(l_pRootElement);
 
+            TiXmlElement* l_lights = l_pRootElement->FirstChildElement("lights");
+            if(l_lights != NULL) readLights(l_lights);
+
             TiXmlElement* l_group = l_pRootElement->FirstChildElement("group");
             readTransformations(l_group);
+
+
         }
     }
     else {
