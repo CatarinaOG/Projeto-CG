@@ -15,17 +15,36 @@
 namespace myXML{
     struct TexAndColor {
         char* texFile;
-        int diffuse[3];
-        int ambient[3];
-        int specular[3];
-        int emissive[3];
-        int shineness;
+        float diffuse[3];
+        float ambient[3];
+        float specular[3];
+        float emissive[3];
+        float shininess;
     };
 
-    struct Lights{
-        float point[3];
-        float directional[3];
-        float spotlight[7];
+    struct LightPoint{
+        float posX;
+        float posY;
+        float posZ;
+    };
+
+    struct LightDirectional{
+        float dirX;
+        float dirY;
+        float dirZ;
+    };
+
+    struct LightSpotlight{
+        float posX;
+        float posY;
+        float posZ;
+
+        float dirX;
+        float dirY;
+        float dirZ;
+
+        float cutoff;
+
     };
 
     class xml_parse{
@@ -43,7 +62,10 @@ namespace myXML{
 
         //Texturas
         std::vector<TexAndColor*> modelsTexAndColors;
-        Lights* lights = (Lights*) malloc(sizeof(struct Lights));
+        std::vector<LightPoint*> lightsPoint;
+        std::vector<LightDirectional*> lightsDirectional;
+        std::vector<LightSpotlight*> lightsSpotlight;
+
 
         GLdouble x1, t1, z1, x2, y2, z2, x3, y3, z3, fov, near, far;
         void readTransformations(TiXmlElement* l_group);

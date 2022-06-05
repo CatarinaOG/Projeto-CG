@@ -27,8 +27,9 @@ float yVec[3];
 
 float* r = (float*) malloc(sizeof(float)*3);
 
-float camX = 0, camY = 0, camZ = 0;
-double alpha = 0.0f, beta = 0.0f, radius = 5.0f;
+float camX = 0, camY = 0, camZ = 30;
+double alpha = 0.0f, beta = 0.0f, radius = 30.0f;
+float angle_step = 0.5f;
 
 xml_parse* xmlParse = new xml_parse();
 char* filename;
@@ -48,8 +49,9 @@ vector<vector<vertex> > v_matrix;
 vector<float> planetsPos;
 vector<float> planetsAngle;
 
-GLuint *buffers;
-GLuint *texBuffer;
+GLuint *buffers;    /* Buffer das coordenadas dos vertices */
+GLuint *texBuffer;  /* Buffer das coordenadas das texturas */
+GLuint *normBuffer;
 
 vector<int> sizes;
 
@@ -126,20 +128,13 @@ void cameraOrientarionNewAxis(){
     normalize(r);
     cross(r, lookVec, yVec);
     normalize(yVec);
-    /*
-    printf("look: %f %f %f\n",look[0],look[1],look[2]);
-    printf("camPos: %f %f %f\n",camPos[0],camPos[1],camPos[2]);
-    printf("lookVec: %f %f %f\n",lookVec[0],lookVec[1],lookVec[2]);
-    printf("r: %f %f %f\n",r[0],r[1],r[2]);
-    printf("yVec: %f %f %f\n",yVec[0],yVec[1],yVec[2]);
-     */
 
 }
 
 void processKeys(unsigned char c, int xx, int yy) {
 
     int stride = 1;
-// put code to process regular keys in here
+
     switch(c){
         case 'l':
             time_multiplier *= 2;
@@ -228,14 +223,14 @@ void processKeys(unsigned char c, int xx, int yy) {
 void processSpecialKeys(int key, int xx, int yy){
     switch(key){
         case GLUT_KEY_RIGHT:
-            alpha -= 1.0f;
+            alpha -= angle_step;
             //look[0] = cos(beta)* sin(alpha);
             //look[1] = sin(beta);
             //look[2] = cos(beta) * cos(alpha);
             //cameraOrientarionNewAxis();
             break;
         case GLUT_KEY_LEFT:
-            alpha += 1.0f;
+            alpha += angle_step;
             //look[0] = cos(beta)* sin(alpha);
             //look[1] = sin(beta);
             //look[2] = cos(beta) * cos(alpha);
@@ -243,7 +238,7 @@ void processSpecialKeys(int key, int xx, int yy){
 
             break;
         case GLUT_KEY_UP:
-            beta += 1.0f;
+            beta += angle_step;
             if (beta > 1.5f)
                 beta = 1.5f;
             //look[0] = cos(beta)* sin(alpha);
@@ -253,7 +248,7 @@ void processSpecialKeys(int key, int xx, int yy){
             break;
 
         case GLUT_KEY_DOWN:
-            beta -= 1.0f;
+            beta -= angle_step;
             if (beta < -1.5f)
                 beta = -1.5f;
             //look[0] = cos(beta)* sin(alpha);
@@ -269,44 +264,120 @@ void processSpecialKeys(int key, int xx, int yy){
 
 void changeSize(int w, int h) {
 
-    // Prevent a divide by zero, when window is too short
-    // (you cant make a window with zero width).
-    if (h == 0)
-        h = 1;
 
-    // compute window's aspect ratio
-    float ratio = w * 1.0 / h;
+    if (h == 0) h = 1;                                                                      // Prevent a divide by zero, when window is too short
+    float ratio = w * 1.0 / h;                                                              // compute window's aspect ratio
 
-    // Set the projection matrix as current
-    glMatrixMode(GL_PROJECTION);
-    // Load Identity Matrix
-    glLoadIdentity();
-
-    // Set the viewport to be the entire window
-    glViewport(0, 0, w, h);
-
-    // Set perspective
-    gluPerspective(xmlParse->fov, ratio, xmlParse->near, xmlParse->far);
-
-    // return to the model view matrix mode
-    glMatrixMode(GL_MODELVIEW);
+    glMatrixMode(GL_PROJECTION);                                                        // Set the projection matrix as current
+    glLoadIdentity();                                                                        // Load Identity Matrix
+    glViewport(0, 0, w, h);                                                     // Set the viewport to be the entire window
+    gluPerspective(xmlParse->fov, ratio, xmlParse->near, xmlParse->far);   // Set perspective
+    glMatrixMode(GL_MODELVIEW);                                                         // Return to the model view matrix mode
 }
 
-
-void tokenize(std::string const& str, const char delim,
-              std::vector<std::string>& out)
-{
+/*------------ Divisão da informação de cada linha ---------*/
+void tokenize(std::string const& str, const char delim,std::vector<std::string>& out){
     size_t start;
     size_t end = 0;
 
-    while ((start = str.find_first_not_of(delim, end)) != std::string::npos)
-    {
+    while ((start = str.find_first_not_of(delim, end)) != std::string::npos){
         end = str.find(delim, start);
         out.push_back(str.substr(start, end - start));
     }
 }
 
 
+
+
+/*-----------------Carregamento das luzes------------------ */
+void loadLights() {
+
+    int n_light = 0;
+    /*------------Ponctual Light---------*/
+
+    //printf("%d,%d,%d", xmlParse->lightsPoint.size(), xmlParse->lightsDirectional.size(), xmlParse->lightsSpotlight.size());
+
+    for (int i = 0; i < xmlParse->lightsPoint.size(); i++) {
+        float pos[4];
+
+        pos[0] = xmlParse->lightsPoint[i]->posX;
+        pos[1] = xmlParse->lightsPoint[i]->posY;
+        pos[2] = xmlParse->lightsPoint[i]->posZ;
+        pos[3] = 1;
+        glLightfv(GL_LIGHT0 + n_light, GL_POSITION, pos);
+       // printf("\n\n%f | %f | %f\n\n", pos[0], pos[1], pos[2]);
+        n_light++;
+    }
+
+    /*------------Directional Lights----*/
+
+    for (int i = 0; i < xmlParse->lightsDirectional.size(); i++) {
+        float dir[4];
+        dir[0] = xmlParse->lightsDirectional[i]->dirX;
+        dir[1] = xmlParse->lightsDirectional[i]->dirY;
+        dir[2] = xmlParse->lightsDirectional[i]->dirZ;
+        dir[3] = 1;
+        glLightfv(GL_LIGHT0 + n_light, GL_SPOT_DIRECTION, dir);
+        n_light++;
+    }
+
+    /*------------Spotlight Lights----*/
+
+    for (int i = 0; i < xmlParse->lightsSpotlight.size(); i++) {
+        float pos[4];
+        pos[0] = xmlParse->lightsSpotlight[i]->posX;
+        pos[1] = xmlParse->lightsSpotlight[i]->posY;
+        pos[2] = xmlParse->lightsSpotlight[i]->posZ;
+        pos[3] = 0;
+
+        float dir[4];
+        dir[0] = xmlParse->lightsSpotlight[i]->dirX;
+        dir[1] = xmlParse->lightsSpotlight[i]->dirX;;
+        dir[2] = xmlParse->lightsSpotlight[i]->dirZ;
+        dir[3] = 1;
+
+        float cutoff = xmlParse->lightsSpotlight[i]->cutoff;
+
+        glLightfv(GL_LIGHT0 + n_light, GL_POSITION, pos);
+        glLightfv(GL_LIGHT0 + n_light, GL_SPOT_DIRECTION, dir);
+        glLightfv(GL_LIGHT0 + n_light, GL_SPOT_CUTOFF, &cutoff);
+        n_light++;
+    }
+}
+
+/*-----------------Carregamento das cores------------------ */
+void loadColors(int fileIndex){
+
+    //printf("%d\n", fileIndex);
+
+    /* Ambiente */
+    float ambient_color[3];
+    ambient_color[0] = xmlParse->modelsTexAndColors[fileIndex]->ambient[0]/255.0f;
+    ambient_color[1] = xmlParse->modelsTexAndColors[fileIndex]->ambient[1]/255.0f;
+    ambient_color[2] = xmlParse->modelsTexAndColors[fileIndex]->ambient[2]/255.0f;
+    glMaterialfv(GL_FRONT, GL_AMBIENT, ambient_color);
+
+    /* Difusa */
+    float diffuse_color[3];
+    diffuse_color[0] = xmlParse->modelsTexAndColors[fileIndex]->diffuse[0]/255.0f;
+    diffuse_color[1] = xmlParse->modelsTexAndColors[fileIndex]->diffuse[1]/255.0f;
+    diffuse_color[2] = xmlParse->modelsTexAndColors[fileIndex]->diffuse[2]/255.0f;
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse_color);
+    //printf("%f | %f | %f\n", diffuse_color[0], diffuse_color[1], diffuse_color[2]);
+
+    /* Especular */
+    float specular_color[3];
+    specular_color[0] = xmlParse->modelsTexAndColors[fileIndex]->specular[0]/255.0f;
+    specular_color[1] = xmlParse->modelsTexAndColors[fileIndex]->specular[1]/255.0f;
+    specular_color[2] = xmlParse->modelsTexAndColors[fileIndex]->specular[2]/255.0f;
+    glMaterialfv(GL_FRONT, GL_SPECULAR,specular_color);
+
+    /* Shininess */
+    //printf("Shininess%f\n", xmlParse->modelsTexAndColors[fileIndex]->shininess);
+    glMaterialf(GL_FRONT, GL_SHININESS, xmlParse->modelsTexAndColors[fileIndex]->shininess);
+}
+
+/*--------------------Retorna id da Textura--------------------*/
 int loadTex(std::string s){
     unsigned int t, tw, th, texID;
     unsigned char* texData;
@@ -326,22 +397,13 @@ int loadTex(std::string s){
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexImage2D(
-            GL_TEXTURE_2D,
-            0,
-            GL_RGBA,
-            tw,
-            th,
-            0,
-            GL_RGBA,
-            GL_UNSIGNED_BYTE,
-            texData);
+    glTexImage2D(GL_TEXTURE_2D,0,GL_RGBA,tw,th,0,GL_RGBA,GL_UNSIGNED_BYTE,texData);
     glGenerateMipmap(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, 0);
     return texID;
 }
 
-// parse de ficheiros .3d
+/*----------------------Parser do Ficheiros .3d --------------------*/
 void parser(const char* filename) {
 
     string line;
@@ -352,85 +414,109 @@ void parser(const char* filename) {
     vector<std::string> out;
     vector<float> tmp;
     vector<float> texels;
+    vector<float> normals;
 
+    /* Vai em cada linha colocar em out a info separado pelo delimitador  */
     if (myfile.is_open()){
         while (getline(myfile, line))
-            tokenize(line, delimiter, out); //ler linha do ficheiro
+            tokenize(line, delimiter, out);
 
         myfile.close();
     }
     else cout << "Unable to open file";
 
+
+    /* Guarda as 6 coordenadas de textura
+     * ,9 coordenadas dos 3 vértices e
+     * 9 coordenadas das normais de cada vértice associadas a um triângulo */
+
     for (size_t i = 0; i < out.size(); ) {
         for(int ti = 0 ; ti < 6  ; ti++)
             texels.push_back(std::stof(out[i + ti]));
         i += 6;
+        for(int ni = 0; ni < 9; ni++)
+            normals.push_back(std::stof(out[i + ni]));
+        i+=9;
         for(int vi = 0; vi < 9 ; vi++)
             tmp.push_back(std::stof(out[i + vi]));
         i+=9;
     }
 
-    /* Bind buffer com o pontos */
-    glBindBuffer(GL_ARRAY_BUFFER, buffers[(filesRead.size()-1)]);
+    /* Bind buffer com as coordenadas dos vértices */
+    glBindBuffer(GL_ARRAY_BUFFER, buffers[filesRead.size()-1]);
     glVertexPointer(3, GL_FLOAT, 0, 0);
     glBufferData(GL_ARRAY_BUFFER, tmp.size()*sizeof(float), tmp.data(), GL_STATIC_DRAW);
 
-    /* bind buffer com coordendas de texturas */
-    textIds[filesRead.size()-1] = loadTex(xmlParse->modelsTexAndColors[filesRead.size()-1]->texFile);
+    if(xmlParse->modelsTexAndColors[filesRead.size()-1]->texFile != NULL) {
+        /* Guarda o id do modelo atual */
+        textIds[filesRead.size() - 1] = loadTex(xmlParse->modelsTexAndColors[filesRead.size() - 1]->texFile);
 
-    glBindBuffer(GL_ARRAY_BUFFER, texBuffer[(filesRead.size()-1)]);
-    glTexCoordPointer(2,GL_FLOAT,0,0);
-    glBufferData(GL_ARRAY_BUFFER, texels.size()*sizeof(float), texels.data(), GL_STATIC_DRAW);
+        /* Bind buffer com coordendas de texturas */
+        glBindBuffer(GL_ARRAY_BUFFER, texBuffer[filesRead.size() - 1]);
+        glTexCoordPointer(2, GL_FLOAT, 0, 0);
+        glBufferData(GL_ARRAY_BUFFER, texels.size() * sizeof(float), texels.data(), GL_STATIC_DRAW);
+    }
 
+    /* Bind buffer com normais dos vértices */
+    glBindBuffer(GL_ARRAY_BUFFER, normBuffer[filesRead.size()-1]);
+    glBufferData(GL_ARRAY_BUFFER, normals.size()*sizeof(float), normals.data(), GL_STATIC_DRAW);
+
+    /* Número de coordenadas de vertices e texturas de cada modelo */ //--------------------------------------Cuidado para modelos sem texturas
     sizes.push_back(tmp.size());
     sizes.push_back(texels.size());
-
+    sizes.push_back(normals.size());
 
     vertices.clear();
 }
 
 
 void drawPrimitive(int fileIndex){
-    glColor3f(1.0f, 1.0f, 1.0f);
 
-    /* carregar textura */
-    glBindTexture(GL_TEXTURE_2D, textIds[fileIndex]);
+    loadColors(fileIndex);
 
-    /* carregar vertices */
+    /* Carregar textura */
+    if (xmlParse->modelsTexAndColors[fileIndex]->texFile != NULL)
+        glBindTexture(GL_TEXTURE_2D, textIds[fileIndex]);
+
+    /* Carregar vertices */
     glBindBuffer(GL_ARRAY_BUFFER, buffers[fileIndex]);
     glVertexPointer(3, GL_FLOAT, 0, 0);
-    //glDrawArrays(GL_TRIANGLES, 0, sizes.at(2*fileIndex));
 
-    /* carregar coordenadas de textura */
+    /* Carregar normais dos vértices */
+    glBindBuffer(GL_ARRAY_BUFFER, normBuffer[fileIndex]);
+    glNormalPointer(GL_FLOAT, 0, 0);
+
+    /* Carregar coordenadas de textura */
     glBindBuffer(GL_ARRAY_BUFFER, texBuffer[fileIndex]);
     glTexCoordPointer(2,GL_FLOAT,0,0);
 
-    /* desenhar os arrays */
-    glDrawArrays(GL_TRIANGLES, 0, (sizes.at(2*fileIndex))/3);
+    /* Desenhar os triângulos */
+    glDrawArrays(GL_TRIANGLES, 0, (sizes.at(3*fileIndex))/3);
+
 
 }
 
 
+/*-----------------Multiplicação de Matrix por Vetor-----------------*/
 void multMatrixVector(float *m, float *v, float *res) {
 
     for (int j = 0; j < 4; ++j) {
         res[j] = 0;
-        for (int k = 0; k < 4; ++k) {
+        for (int k = 0; k < 4; ++k)
             res[j] += v[k] * m[j * 4 + k];
-        }
     }
 }
 
-
+/*-----------------Obter pontos da curva num dado t-----------------*/
 void getCatmullRomPoint(float t, float *p0, float *p1, float *p2, float *p3, float *pos, float *deriv) {
 
-    // catmull-rom matrix
+    /* catmull-rom matrix */
     float m[4][4] = {	{-0.5f,  1.5f, -1.5f,  0.5f},
                          { 1.0f, -2.5f,  2.0f, -0.5f},
                          {-0.5f,  0.0f,  0.5f,  0.0f},
                          { 0.0f,  1.0f,  0.0f,  0.0f}};
 
-    // Compute A = M * P
+    /* Compute A = M * P */
     float a[4];
     float tVector[4] = {pow(t, 3.0f), pow(t, 2.0f), t, 1};
     float tVectorL[4] = {3*pow(t, 2.0f), 2*t, 1, 0};
@@ -441,17 +527,15 @@ void getCatmullRomPoint(float t, float *p0, float *p1, float *p2, float *p3, flo
         multMatrixVector((float *) m, ponto, a);
 
         // Compute pos = T * A
-
         pos[i] = tVector[0] * a[0] + tVector[1] * a[1] + tVector[2] * a[2] + tVector[3] * a[3];
 
         // compute deriv = T' * A
-
         deriv[i] = tVectorL[0] * a[0] + tVectorL[1] * a[1] + tVectorL[2] * a[2];
     }
 }
 
 
-// given  global t, returns the point in the curve
+/*-----------------Dado um t global obtêm-se os pontos da curva -----------------*/
 void getGlobalCatmullRomPoint(float gt, float *pos, float *deriv) {
 
     int n_points = (int) xmlParse->nrPointsPerCurve.at(countCurves);
@@ -469,10 +553,6 @@ void getGlobalCatmullRomPoint(float gt, float *pos, float *deriv) {
     indices[2] = (indices[1]+1)%n_points;
     indices[3] = (indices[2]+1)%n_points;
 
-    //for(int i = 0; i < xmlParse->controlPoints.size(); i++){
-    //rintf("Ponto %d: %f %f %f\n", i, xmlParse->controlPoints.at(i)[0], xmlParse->controlPoints.at(i)[1], xmlParse->controlPoints.at(i)[2]);
-    //}
-
     float* p0 = xmlParse->controlPoints.at(current_index + indices[0]);
     float* p1 = xmlParse->controlPoints.at(current_index + indices[1]);
     float* p2 = xmlParse->controlPoints.at(current_index + indices[2]);
@@ -481,11 +561,11 @@ void getGlobalCatmullRomPoint(float gt, float *pos, float *deriv) {
     getCatmullRomPoint(t, p0, p1, p2, p3, pos, deriv);
 }
 
+/*-----------------Desenhar curva de Catmull-----------------*/
 void renderCatmullRomCurve() {
-    // draw curve using line segments with GL_LINE_LOOP
+
     float pos[4];
     float deriv[4];
-
 
     vector<float> x;
 
@@ -497,16 +577,15 @@ void renderCatmullRomCurve() {
     }
 
     glBindBuffer(GL_ARRAY_BUFFER, buffers[models.size()]);
-    glBufferData(GL_ARRAY_BUFFER, x.size()*sizeof(float), x.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, x.size() * sizeof(float), x.data(), GL_STATIC_DRAW);
 
     glBindBuffer(GL_ARRAY_BUFFER, buffers[models.size()]);
     glVertexPointer(3, GL_FLOAT, 0, 0);
     glDrawArrays(GL_LINE_LOOP, 0, x.size());
-
 }
 
+/* Simbologia das operações:
 
-/*
     1 -> translate
     2 -> rotate
     3 -> scale
@@ -517,6 +596,7 @@ void renderCatmullRomCurve() {
     8-> rotate catmull
 */
 
+/*-----------------Desenha e Faz as transformações de primitivas-----------------*/
 void draw() {
     int modelInd = 0;
     countCurves = 0;
@@ -623,32 +703,65 @@ void draw() {
 
 void renderScene(void) {
 
-    // clear buffers
+    
+
+    glClearColor(0.0f,0.0f,0.0f,0.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // set the camera
+    //printf("%f | %f | %f\n", xmlParse->lightsPoint[0]->posX, xmlParse->lightsPoint[0]->posY, xmlParse->lightsPoint[0]->posZ);
+
     glLoadIdentity();
 
     gluLookAt(camX, camY, camZ,
               look[0], look[1], look[2],
               up[0], up[1], up[2]);
 
+
+    loadLights();
     glBegin(GL_LINES);
+
     // X axis in red
     glColor3f(1.0f, 0.0f, 0.0f);
     glVertex3f(-100.0f, 0.0f, 0.0f);
     glVertex3f( 100.0f, 0.0f, 0.0f);
+
     // Y Axis in Green
     glColor3f(0.0f, 1.0f, 0.0f);
     glVertex3f(0.0f,-100.0f, 0.0f);
     glVertex3f(0.0f, 100.0f, 0.0f);
+
     // Z Axis in Blue
     glColor3f(0.0f, 0.0f, 1.0f);
     glVertex3f(0.0f, 0.0f,-100.0f);
     glVertex3f(0.0f, 0.0f, 100.0f);
+
     glEnd();
 
+    glTranslatef(25,25,25);
+    glutWireSphere(0.5, 10, 10);
+    glTranslatef(-25,-25,-25);
+
+    float dark[] = { 0.2, 0.2, 0.2, 1.0 };
+    float white[] = { 0.8, 0.8, 0.8, 1.0 };
+    float red[] = { 0.8, 0.2, 0.2, 1.0 };
+    float yellow[] = {1,1,0,0};
+
     draw();
+
+
+
+/*
+    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, red);
+    glMaterialfv(GL_FRONT, GL_SPECULAR, white);
+    glMaterialf(GL_FRONT, GL_SHININESS, 128);
+
+
+    glutSolidSphere(1, 500, 500);
+*/
+
+
+
+
 
     // End of frame
     glutSwapBuffers();
@@ -678,19 +791,8 @@ void setToZeroAllPlanetsAngle(){
     }
 }
 
-int main(int argc, char** argv) {
-
+void setUpCamera(){
     GLdouble aux_p[3];
-
-    // init GLUT and the window
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
-    glutInitWindowPosition(100, 100);
-    glutInitWindowSize(800, 800);
-    glutCreateWindow("CG@DI-UM");
-    filename = argv[1];
-    //readXML();
-    xmlParse->readXML(filename);
 
     look[0] = xmlParse->x2;
     look[1] = xmlParse->y2;
@@ -717,19 +819,34 @@ int main(int argc, char** argv) {
             alpha = acos(1);
     else
         alpha = acos((aux_p[2] - camPos[2]) / cos(beta));
+}
 
-    /*
-    printf("%f, %f, %f\n", lights->point[0], lights->point[1], lights->point[2]);
-    printf("%f, %f, %f\n", lights->directional[0], lights->directional[1], lights->directional[2]);
-    printf("%f, %f, %f, %f, %f, %f, %f\n", lights->spotlight[0], lights->spotlight[1], lights->spotlight[2], lights->spotlight[3], lights->spotlight[4], lights->spotlight[5], lights->spotlight[6]);
-    */
+int main(int argc, char** argv) {
+
+    float black[] = {0.0f,0.0f,0.0f,0.0f};
+    // init GLUT and the window
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
+    glutInitWindowPosition(100, 100);
+    glutInitWindowSize(800, 800);
+    glutCreateWindow("CG@DI-UM");
+    filename = argv[1];
+
+    //Lê o ficheiros XML
+    xmlParse->readXML(filename);
+
+    //Coloca a camera de acordo com XML
+    setUpCamera();
 
     diferent_models();
 
     GLuint aux[models.size()];
     GLuint auxTex[models.size()];
+    GLuint auxNorm[models.size()];
+
     buffers = aux;
     texBuffer = auxTex;
+    normBuffer = auxNorm;
 
     textIds = (GLuint*) malloc(sizeof(GLuint) * (models.size()-1));
 
@@ -740,9 +857,9 @@ int main(int argc, char** argv) {
     interval = curr_time_trans - t_prev_trans;
 
     // init GLEW
-#ifndef __APPLE__
-    glewInit();
-#endif
+    #ifndef __APPLE__
+        glewInit();
+    #endif
 
     // Required callback registry
     glutSpecialFunc(processSpecialKeys);
@@ -753,20 +870,38 @@ int main(int argc, char** argv) {
 
     ilInit();
 
+
     //  OpenGL settings
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
     glEnable(GL_TEXTURE_2D);
+    glEnable(GL_LIGHTING);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_NORMAL_ARRAY);
+    //enable lights
 
+    GLfloat dark[4] = {0.2, 0.2, 0.2, 1.0};
+    GLfloat white[4] = {1.0, 1.0, 1.0, 1.0};
+
+    int n_lights = xmlParse->lightsDirectional.size() + xmlParse->lightsPoint.size() + xmlParse->lightsSpotlight.size();
+    for(int i = 0; i < n_lights; i++){
+        glEnable(GL_LIGHT0 + i);
+        glLightfv(GL_LIGHT0 + i, GL_AMBIENT, dark);
+        glLightfv(GL_LIGHT0 + i, GL_DIFFUSE, white);
+        glLightfv(GL_LIGHT0 + i, GL_SPECULAR, white);
+        glLightModelfv(GL_LIGHT_MODEL_AMBIENT,black);
+    }
 
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    glEnableClientState(GL_NORMAL_ARRAY);
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     // enter GLUT's main cycle
     glGenBuffers(models.size(), buffers);
     glGenBuffers(models.size(), texBuffer);
+    glGenBuffers(models.size(), normBuffer);
     glutMainLoop();
 
     return 1;

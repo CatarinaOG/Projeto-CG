@@ -16,6 +16,7 @@
 
 using namespace std;
 
+
 char** arguments;
 int argumentsLen;
 
@@ -43,6 +44,15 @@ vertex assignCoords(float radius, int currStack, int currSlice, float i_beta, fl
     };
     return v;
 }
+
+void normalize(float * a) {
+
+    float l = sqrt(a[0]*a[0] + a[1] * a[1] + a[2] * a[2]);
+    a[0] = a[0]/l;
+    a[1] = a[1]/l;
+    a[2] = a[2]/l;
+}
+
 
 void tokenize(std::string const& str, const char delim, std::vector<std::string>& out){
     size_t start;
@@ -265,19 +275,28 @@ void writePlane(int length, int divisions, char* fileName) {
             /* coordenadas de textura */
             MyFile << text_ind_x << ";" << text_ind_y << ";";
             MyFile << text_ind_x + text_step << ";" << text_ind_y << ";";
-            MyFile << text_ind_x + text_step << ";" << text_ind_y + text_step << ";" << std::endl;
+            MyFile << text_ind_x + text_step << ";" << text_ind_y + text_step << std::endl;
 
+            /* coordenadas das normais*/
+            MyFile << 0 << ";" << 1 << ";" << 0 << ";";
+            MyFile << 0 << ";" << 1 << ";" << 0 << ";";
+            MyFile << 0 << ";" << 1 << ";" << 0 << std::endl;
 
             /* coordenadas de Vertice */
             MyFile << startx << ";" << 0 << ";" << startz << ";";
             MyFile << startx + size << ";" << 0 << ";" << startz << ";";
             MyFile << startx + size << ";" << 0 << ";" << startz - size << std::endl;
 
+
             /* coordenadas de textura */
             MyFile << text_ind_x << ";" << text_ind_y << ";";
             MyFile << text_ind_x + text_step << ";" << text_ind_y + text_step << ";";
-            MyFile << text_ind_x  << ";" << text_ind_y + text_step << ";" << std::endl;
+            MyFile << text_ind_x  << ";" << text_ind_y + text_step << std::endl;
 
+            /* coordenadas das normais*/
+            MyFile << 0 << ";" << 1 << ";" << 0 << ";";
+            MyFile << 0 << ";" << 1 << ";" << 0 << ";";
+            MyFile << 0 << ";" << 1 << ";" << 0 << std::endl;
 
             /* coordenadas de Vertice */
             MyFile << startx << ";" << 0 << ";" << startz << ";";
@@ -358,53 +377,67 @@ void writeCube(int length, int divisions, char* fileName) {
             startx = startxFixo + (i * size);
 
 
-            // BASE 1
+            //-----------BASE 1 bottom ---------------------------------------------
 
-            // ---- Coordenadas de textura
-
+            /* coordenadas das texturas */
             MyFile << text_ind_x << ";" <<  text_ind_y << ";";
             MyFile << text_ind_x + step_text << ";" << text_ind_y + step_text << ";";
             MyFile << text_ind_x + step_text << ";" <<  text_ind_y  << std::endl;
 
-            // coordenadas
+            /* normais do vértice*/
+
+            MyFile << "0;-1;0;0;-1;0;0;-1;0" << std::endl;
+
+            /* coordenadas dos vertices */
             MyFile << startx << ";" << bottomY << ";" << startz << ";";
             MyFile << startx + size << ";" << bottomY << ";" << startz - size << ";";
             MyFile << startx + size << ";" << bottomY << ";" << startz << std::endl;
 
 
-            // ---- Coordenadas de textura
-
+            /* coordenadas das texturas */
             MyFile << text_ind_x << ";" <<  text_ind_y << ";";
             MyFile << text_ind_x << ";" << text_ind_y + step_text << ";";
             MyFile << text_ind_x + step_text << ";" <<  text_ind_y + step_text << std::endl;
 
-            // ----- coordenadas
+            /* normais do vértice*/
 
+            MyFile << "0;-1;0;0;-1;0;0;-1;0" << std::endl;
+
+            /* coordenadas dos vertices */
             MyFile << startx << ";" << bottomY << ";" << startz << ";";
             MyFile << startx << ";" << bottomY << ";" << startz - size << ";";
             MyFile << startx + size << ";" << bottomY << ";" << startz - size << std::endl;
 
 
 
-            // ------------------ BASES 2
+            // --------------BASES 2 top ---------------------------------------------
 
-            // ---- Coordenadas de textura
+            /* coordenadas das texturas */
 
             MyFile << text_ind_x << ";" <<  text_ind_y << ";";
             MyFile << text_ind_x + step_text << ";" << text_ind_y  << ";";
             MyFile << text_ind_x + step_text << ";" <<  text_ind_y  + step_text << std::endl;
 
-            // coordenadas
+            /* normais do vértice*/
+
+            MyFile << "0;1;0;0;1;0;0;1;0" << std::endl;
+
+            /* coordenadas dos vertices */
             MyFile << startx << ";" << topY << ";" << startz << ";";
             MyFile << startx + size << ";" << topY << ";" << startz << ";";
             MyFile << startx + size << ";" << topY << ";" << startz - size << std::endl;
 
-            // ---- Coordenadas de textura
 
+            /* coordenadas das texturas */
             MyFile << text_ind_x << ";" <<  text_ind_y << ";";
             MyFile << text_ind_x + step_text << ";" << text_ind_y + step_text << ";";
             MyFile << text_ind_x  << ";" <<  text_ind_y + step_text << std::endl;
-            //coordenadas
+
+            /* normais do vértice*/
+
+            MyFile << "0;1;0;0;1;0;0;1;0" << std::endl;
+
+            /* coordenadas dos vertices */
             MyFile << startx << ";" << topY << ";" << startz << ";";
             MyFile << startx + size << ";" << topY << ";" << startz - size << ";";
             MyFile << startx << ";" << topY << ";" << startz - size << std::endl;
@@ -415,7 +448,7 @@ void writeCube(int length, int divisions, char* fileName) {
     }
     text_ind_y = 0;
 
-    // ---------------- front left back AND right-------------------
+    // ---------------- front left AND back right-------------------
 
     startx = -(length / static_cast<float>(2)); //x inicial de forma ao cubo centrar na origem
     startxFixo = startx;
@@ -435,48 +468,62 @@ void writeCube(int length, int divisions, char* fileName) {
 
             startx = startxFixo + (i * size);
 
-            //---------------------------- FACE 1
-            // coordendasd de textura
+            //------------ FACE 1---------------------------------
+            /* coordenadas das texturas */
             MyFile << text_ind_x << ";" <<  text_ind_y << ";";
             MyFile << text_ind_x + step_text << ";" << text_ind_y  << ";";
             MyFile << text_ind_x  << ";" <<  text_ind_y + step_text << std::endl;
-            //coordenadas
+
+            /* normais do vértice*/
+
+            MyFile << "0;0;1;0;0;1;0;0;1" << std::endl;
+
+            /* coordenadas dos vertices */
             MyFile << startx << ";" << starty << ";" << startz << ";";
             MyFile << startx + size << ";" << starty << ";" << startz << ";";
             MyFile << startx << ";" << starty + size << ";" << startz << std::endl;
 
 
-            // coordendasd de textura
+            /* coordenadas das texturas */
             MyFile << text_ind_x << ";" <<  text_ind_y + step_text<< ";";
             MyFile << text_ind_x + step_text << ";" << text_ind_y  << ";";
             MyFile << text_ind_x + step_text << ";" <<  text_ind_y + step_text << std::endl;
 
-            // coordenadas
+            /* normais do vértice*/
+            MyFile << "0;0;1;0;0;1;0;0;1" << std::endl;
 
+            /* coordenadas dos vertices */
             MyFile << startx << ";" << starty + size << ";" << startz << ";";
             MyFile << startx + size << ";" << starty << ";" << startz << ";";
             MyFile << startx + size << ";" << starty + size << ";" << startz << std::endl;
 
 
-            //---------------------------- FACE 2
-            // coordenadas de textura
+            //---------------FACE 2-----------------------------------------
+            /* coordenadas das texturas */
             MyFile << text_ind_x << ";" <<  text_ind_y << ";";
             MyFile << text_ind_x  << ";" << text_ind_y + step_text  << ";";
             MyFile << text_ind_x + step_text << ";" <<  text_ind_y  << std::endl;
 
-            //coordenadas
+            /* normais do vértice*/
 
+            MyFile << "0;0;-1;0;0;-1;0;0;-1" << std::endl;
+
+            /* coordenadas dos vertices */
             MyFile << startx << ";" << starty << ";" << endz << ";";
             MyFile << startx << ";" << starty + size << ";" << endz << ";";
             MyFile << startx + size << ";" << starty << ";" << endz << std::endl;
 
-            // coordendasd de textura
+
+            /* coordenadas das texturas */
             MyFile << text_ind_x << ";" <<  text_ind_y + step_text<< ";";
             MyFile << text_ind_x + step_text << ";" << text_ind_y + step_text  << ";";
             MyFile << text_ind_x + step_text << ";" <<  text_ind_y << std::endl;
 
-            //coordenadas
+            /* normais do vértice*/
 
+            MyFile << "0;0;-1;0;0;-1;0;0;-1" << std::endl;
+
+            /* coordenadas dos vertices */
             MyFile << startx << ";" << starty + size << ";" << endz << ";";
             MyFile << startx + size << ";" << starty + size << ";" << endz << ";";
             MyFile << startx + size << ";" << starty << ";" << endz << std::endl;
@@ -511,49 +558,65 @@ void writeCube(int length, int divisions, char* fileName) {
             startz = startzFixo - (i * size);
 
 
-            // ------- LADO 1
+            // ----------------------LADO 1 Front-Right---------------------------------
 
-            //front-right
-
-            // coordendasd de textura
+            /* coordenadas das texturas */
             MyFile << text_ind_x << ";" <<  text_ind_y << ";";
             MyFile << text_ind_x + step_text << ";" << text_ind_y << ";";
             MyFile << text_ind_x  + step_text << ";" <<  text_ind_y + step_text << std::endl;
 
+            /* normais do vértice*/
 
+            MyFile << "1;0;0;1;0;0;1;0;0" << std::endl;
 
+            /* coordenadas dos vertices */
             MyFile << endx << ";" << starty << ";" << startz<< ";";
             MyFile << endx << ";" << starty << ";" << startz-size << ";";
             MyFile << endx << ";" << starty+size << ";" << startz -size << std::endl;
 
-            // coordendasd de textura
+
+            /* coordenadas das texturas */
             MyFile << text_ind_x << ";" <<  text_ind_y << ";";
             MyFile << text_ind_x  + step_text << ";" << text_ind_y  + step_text<< ";";
             MyFile << text_ind_x << ";" <<  text_ind_y + step_text << std::endl;
 
+            /* normais do vértice*/
+
+            MyFile << "1;0;0;1;0;0;1;0;0" << std::endl;
+
+            /* coordenadas dos vertices */
             MyFile << endx << ";" << starty << ";" << startz << ";";
             MyFile << endx << ";" << starty +size << ";" << startz - size << ";";
             MyFile << endx << ";" << starty + size << ";" << startz << std::endl;
 
 
-            // ------- LADO 2
+            // --------------------------LADO 2 Back-Left--------------------------
 
-            //back-left
-            // coordendasd de textura
+            /* coordenadas das texturas */
             MyFile << text_ind_x << ";" <<  text_ind_y << ";";
             MyFile << text_ind_x + step_text << ";" << text_ind_y + step_text << ";";
             MyFile << text_ind_x + step_text  << ";" <<  text_ind_y << std::endl;
 
+            /* normais do vértice*/
 
+            MyFile << "-1;0;0;-1;0;0;-1;0;0" << std::endl;
+
+            /* coordenadas dos vertices */
             MyFile << startx << ";" << starty << ";" << startz << ";";
             MyFile << startx << ";" << starty + size << ";" << startz-size << ";";
             MyFile << startx << ";" << starty << ";" << startz - size << std::endl;
 
-            // coordendasd de textura
+
+            /* coordenadas das texturas */
             MyFile << text_ind_x << ";" <<  text_ind_y << ";";
             MyFile << text_ind_x << ";" << text_ind_y + step_text << ";";
             MyFile << text_ind_x + step_text<< ";" <<  text_ind_y + step_text << std::endl;
 
+            /* normais do vértice*/
+
+            MyFile << "-1;0;0;-1;0;0;-1;0;0" << std::endl;
+
+            /* coordenadas dos vertices */
             MyFile << startx << ";" << starty << ";" << startz << ";";
             MyFile << startx << ";" << starty+ size << ";" << startz  << ";";
             MyFile << startx << ";" << starty + size << ";" << startz -size << std::endl;
@@ -583,6 +646,29 @@ float* getTexPointsCone(int slice, int stack, int cone_stacks, int cone_slices, 
     return ret;
 }
 
+
+void getConeVertices(int slices, float height, vector<vertex> vertices){
+
+    for(int i=0 ; i<slices ; i++){
+
+
+
+
+    }
+
+
+
+
+
+    vertex topo = {0,height,0};
+    vertices.push_back(topo);
+
+
+
+
+
+}
+
 void writeCone(float radius, float height, int cone_slices, int cone_stacks, char* fileName) {
     float px_top = 0,
         px_bottom = 0,
@@ -601,17 +687,15 @@ void writeCone(float radius, float height, int cone_slices, int cone_stacks, cha
     float cycle_var;
     float y_step = (1.0f/(float)cone_stacks);
 
+    vector<vertex> verticesCone;
+    getConeVertices(cone_slices,height,verticesCone);
 
     while(index <= cone_stacks){
         cycle_var = i / (float) (2*cone_stacks);
         points[index] = cycle_var;
-        printf("%f \n",cycle_var);
         i++;
         index++;
     }
-
-
-
 
     std::ofstream MyFile(fileName);
 
@@ -621,9 +705,6 @@ void writeCone(float radius, float height, int cone_slices, int cone_stacks, cha
     float top_radius = radius - radius_step;
 
     float stack_height = height / (float)cone_stacks;
-
-
-
     float angle_step = (2 * M_PI) / (float)cone_slices;
 
     for (int j = 0; j < cone_slices; j++) {
@@ -635,7 +716,7 @@ void writeCone(float radius, float height, int cone_slices, int cone_stacks, cha
             px_bottom = bottom_radius * sin(angle_bottom);
             pz_bottom = bottom_radius * cos(angle_bottom);
 
-            //1º triângulo
+            //-----------------1º triângulo-----------------------
 
             /* coordenadas de textura */
 
@@ -643,9 +724,8 @@ void writeCone(float radius, float height, int cone_slices, int cone_stacks, cha
             MyFile << getPoints[3] << ";" << i*y_step + y_step << ";";
             MyFile << getPoints[0] << ";" << i*y_step << std::endl;
 
-
+            /* coordenadas dos vertices */
             MyFile << px_bottom << ";" << i * stack_height << ";" << pz_bottom << ";";
-
 
             px_top = top_radius * sin(angle_top);
             pz_top = top_radius * cos(angle_top);
@@ -654,21 +734,20 @@ void writeCone(float radius, float height, int cone_slices, int cone_stacks, cha
 
             angle_bottom -= angle_step;
 
-
             px_bottom = bottom_radius * sin(angle_bottom);
             pz_bottom = bottom_radius * cos(angle_bottom);
 
             MyFile << px_bottom << ";" << i * stack_height << ";" << pz_bottom << std::endl;
 
 
-            //2º triângulo
+            //---------------2º triângulo-------------------
 
-            /* coordenadas de textura */
+            /* coordenadas das texturas */
+            MyFile << getPoints[0] << ";" << i*y_step << ";";
+            MyFile << getPoints[3] << ";" << i*y_step + y_step << ";";
+            MyFile << getPoints[2] << ";" << i*y_step + y_step << std::endl;
 
-            MyFile << getPoints[0] << ";" << i*y_step << ";"; //esquerda baixo
-            MyFile << getPoints[3] << ";" << i*y_step + y_step << ";"; //direita cima
-            MyFile << getPoints[2] << ";" << i*y_step + y_step << std::endl; // esquerda cima
-
+            /* coordenadas dos vertices */
             MyFile << px_bottom << ";" << i * stack_height << ";" << pz_bottom << ";";
 
             px_top = top_radius * sin(angle_top);
@@ -698,16 +777,15 @@ void writeCone(float radius, float height, int cone_slices, int cone_stacks, cha
 
     angle_bottom = 0;
 
-    for (int i = 0; i <= cone_slices; i++)
-    {
+    for (int i = 0; i <= cone_slices; i++){
 
         px_bottom = radius * sin(angle_bottom);
         pz_bottom = radius * cos(angle_bottom);
 
-        //coordenadas de textura
-
+        /* coordenadas das texturas */
         MyFile << "0;0;1;0;1;1" << std::endl;
 
+        /* coordenadas dos vertices */
         MyFile << px_bottom << ";" << 0.0 << ";" << pz_bottom << ";";
 
         angle_bottom -= angle_step;
@@ -721,7 +799,15 @@ void writeCone(float radius, float height, int cone_slices, int cone_stacks, cha
     }
 }
 
+void calculateVec(float p0[3], float p1[3], float res[3]) {
+    res[0] = p0[0] - p1[0];
+    res[1] = p0[1] - p1[1];
+    res[2] = p0[2] - p1[2];
+}
+
 void writeSphere(float radius, int slices, int stacks, char* filename) {
+
+    float center[3] = {0,0,0};
 
     std::ofstream Myfile(filename);
 
@@ -737,40 +823,61 @@ void writeSphere(float radius, int slices, int stacks, char* filename) {
     float tex_step_x = 1.0f / slices, tex_step_y = 1.0f / stacks;
 
     for (int currStack = 0; currStack < stacks; currStack++, tex_ind_y -= tex_step_y) {
-        //int currStack = 3;
         for (int currSlice = 0; currSlice < slices; currSlice++, tex_ind_x += tex_step_x) {
             vertex v1 = assignCoords(radius, currStack, currSlice, i_beta, d_beta, d_alpha);
             vertex v2 = assignCoords(radius, currStack + 1, currSlice, i_beta, d_beta, d_alpha);
             vertex v3 = assignCoords(radius, currStack + 1, currSlice + 1, i_beta, d_beta, d_alpha);
-
             vertex v4 = assignCoords(radius, currStack, currSlice + 1, i_beta, d_beta, d_alpha);
 
-            //1� triangulo
+            float ver1[3] = {v1.x, v1.y, v1.z};
+            float ver2[3] = {v2.x, v2.y, v2.z};
+            float ver3[3] = {v3.x, v3.y, v3.z};
+            float ver4[3] = {v4.x, v4.y, v4.z};
 
-            //coordenadas de textura
+            float vector1[3] = {sin(currStack*d_beta)*cos(currSlice*d_alpha), cos(currStack*d_beta), sin(currStack*d_beta)*sin(currSlice*d_alpha)};
+            float vector2[3] = {sin((currStack+1)*d_beta)*cos(currSlice*d_alpha), cos((currStack+1)*d_beta), sin((currStack+1)*d_beta)*sin(currSlice*d_alpha)};
+            float vector3[3] = {sin((currStack+1)*d_beta)*cos((currSlice+1)*d_alpha), cos((currStack+1)*d_beta), sin((currStack+1)*d_beta)*sin((currSlice+1)*d_alpha)};
+            float vector4[3] = {sin(currStack*d_beta)*cos((currSlice+1)*d_alpha), cos(currStack*d_beta), sin(currStack*d_beta)*sin((currSlice+1)*d_alpha)};
 
+            normalize(vector1);
+            normalize(vector2);
+            normalize(vector3);
+            normalize(vector4);
+
+
+            //--------------1º triangulo----------------
+
+            /* coordenadas das texturas */
             Myfile << tex_ind_x << ";" << tex_ind_y << ";";
             Myfile << tex_ind_x << ";" << tex_ind_y - tex_step_y << ";";
             Myfile << tex_ind_x + tex_step_x << ";" << tex_ind_y - tex_step_y << std::endl;
 
-            //coordenadas
+            /* coordenadas das normais */
 
+            Myfile << vector1[0] << ";" << vector1[1] << ";" << vector1[2] << ";";
+            Myfile << vector2[0] << ";" << vector2[1] << ";" << vector2[2] << ";";
+            Myfile << vector3[0] << ";" << vector3[1] << ";" << vector3[2] << std::endl;
+
+
+            /* coordenadas dos vertices */
             Myfile << v1.x << ";" << v1.y << ";" << v1.z << ";";
             Myfile << v2.x << ";" << v2.y << ";" << v2.z << ";";
             Myfile << v3.x << ";" << v3.y << ";" << v3.z << std::endl;
 
 
-            //2� triangulo
+            //---------------2º triangulo---------------------
 
-            //coordenadas de textura
-
+            /* coordenadas das texturas */
             Myfile << tex_ind_x << ";" << tex_ind_y << ";";
             Myfile << tex_ind_x + tex_step_x << ";" << tex_ind_y - tex_step_y << ";";
             Myfile << tex_ind_x + tex_step_x << ";" << tex_ind_y << std::endl;
 
+            /* coordenadas das normais */
+            Myfile << vector1[0] << ";" << vector1[1] << ";" << vector1[2] << ";";
+            Myfile << vector3[0] << ";" << vector3[1] << ";" << vector3[2] << ";";
+            Myfile << vector4[0] << ";" << vector4[1] << ";" << vector4[2] << std::endl;
 
-            //coordenadas
-
+            /* coordenadas dos vertices */
             Myfile << v1.x << ";" << v1.y << ";" << v1.z << ";";
             Myfile << v3.x << ";" << v3.y << ";" << v3.z << ";";
             Myfile << v4.x << ";" << v4.y << ";" << v4.z << std::endl;
@@ -781,40 +888,33 @@ void writeSphere(float radius, int slices, int stacks, char* filename) {
 }
 
 void writeBezier(char* patchFilename, int nr, char* filename) {
-
     parsePatch(patchFilename);
     writeSurface(nr,filename);
 }
 
-
+/* Dependendo do argumento dado vai desenhar a dada primitiva */
 void choosePrimitive() {
-    if (strcmp(arguments[1], "sphere") == 0 && argumentsLen >= 4) {
+    if (strcmp(arguments[1], "sphere") == 0 && argumentsLen >= 4)
         writeSphere(atoi(arguments[2]), atoi(arguments[3]), atoi(arguments[4]), arguments[5]);
-    }
 
-    if (strcmp(arguments[1], "box") == 0 && argumentsLen >= 5) {
+    if (strcmp(arguments[1], "box") == 0 && argumentsLen >= 5)
         writeCube(atoi(arguments[2]), atoi(arguments[3]), arguments[4]);
-    }
 
-    if (strcmp(arguments[1], "cone") == 0 && argumentsLen >= 5) {
+    if (strcmp(arguments[1], "cone") == 0 && argumentsLen >= 5)
         writeCone(atoi(arguments[2]), atoi(arguments[3]), atoi(arguments[4]), atoi(arguments[5]), arguments[6]);
-    }
 
-    if (strcmp(arguments[1], "plane") == 0 ) {
+    if (strcmp(arguments[1], "plane") == 0 )
         if(argumentsLen >= 5)
             writePlane(atoi(arguments[2]), atoi(arguments[3]), arguments[4]);
-        else {
+        else
             writePlane(atoi(arguments[2]), atoi(arguments[2]), arguments[3]);
-        }
-    }
 
-    if(strcmp(arguments[1],"ring") == 0 && argumentsLen >= 4){
+
+    if(strcmp(arguments[1],"ring") == 0 && argumentsLen >= 4)
         drawRing(atof(arguments[2]),atof(arguments[3]),atoi(arguments[4]),arguments[5]);
-    }
 
-    if (strcmp(arguments[1], "bezier") == 0 && argumentsLen >= 4) {
+    if (strcmp(arguments[1], "bezier") == 0 && argumentsLen >= 4)
         writeBezier(arguments[2], atoi(arguments[3]),arguments[4]);
-    }
 }
 
 
@@ -823,7 +923,6 @@ int main(int argc, char** argv) {
     arguments = argv;
     argumentsLen = argc;
 
-    //choosePrimitive();
     choosePrimitive();
 
     return 1;

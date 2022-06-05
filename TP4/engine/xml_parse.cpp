@@ -19,7 +19,7 @@ void fillAsDefault(TexAndColor* texAndColor){
      texAndColor->emissive[0] = 0;
      texAndColor->emissive[1] = 0;
      texAndColor->emissive[2] = 0;
-     texAndColor->shineness = 0;
+     texAndColor->shininess = 0;
 
  }
 
@@ -148,44 +148,44 @@ void  xml_parse::readTransformations(TiXmlElement* l_group){
                             while(l_model_color_propriety != NULL){
 
                                 if (strcmp(l_model_color_propriety->Value(), "diffuse") == 0){
-                                    const int diffuseR = atoi(l_model_color_propriety->Attribute("R"));
-                                    const int diffuseG = atoi(l_model_color_propriety->Attribute("G"));
-                                    const int diffuseB = atoi(l_model_color_propriety->Attribute("B"));
+                                    const int diffuseR = atof(l_model_color_propriety->Attribute("R"));
+                                    const int diffuseG = atof(l_model_color_propriety->Attribute("G"));
+                                    const int diffuseB = atof(l_model_color_propriety->Attribute("B"));
 
                                     texAndColor->diffuse[0] = diffuseR;
                                     texAndColor->diffuse[1] = diffuseG;
                                     texAndColor->diffuse[2] = diffuseB;
                                 }
                                 else if (strcmp(l_model_color_propriety->Value(), "ambient") == 0) {
-                                    const int ambientR = atoi(l_model_color_propriety->Attribute("R"));
-                                    const int ambientG = atoi(l_model_color_propriety->Attribute("G"));
-                                    const int ambientB = atoi(l_model_color_propriety->Attribute("B"));
+                                    const int ambientR = atof(l_model_color_propriety->Attribute("R"));
+                                    const int ambientG = atof(l_model_color_propriety->Attribute("G"));
+                                    const int ambientB = atof(l_model_color_propriety->Attribute("B"));
 
                                     texAndColor->ambient[0] = ambientR;
                                     texAndColor->ambient[1] = ambientG;
                                     texAndColor->ambient[2] = ambientB;
                                 }
                                 else if (strcmp(l_model_color_propriety->Value(), "specular") == 0){
-                                    const int specularR = atoi(l_model_color_propriety->Attribute("R"));
-                                    const int specularG = atoi(l_model_color_propriety->Attribute("G"));
-                                    const int specularB = atoi(l_model_color_propriety->Attribute("B"));
+                                    const int specularR = atof(l_model_color_propriety->Attribute("R"));
+                                    const int specularG = atof(l_model_color_propriety->Attribute("G"));
+                                    const int specularB = atof(l_model_color_propriety->Attribute("B"));
 
                                     texAndColor->specular[0] = specularR;
                                     texAndColor->specular[1] = specularG;
                                     texAndColor->specular[2] = specularB;
                                 }
                                 else if (strcmp(l_model_color_propriety->Value(), "emissive") == 0) {
-                                    const int emissiveR = atoi(l_model_color_propriety->Attribute("R"));
-                                    const int emissiveG = atoi(l_model_color_propriety->Attribute("G"));
-                                    const int emissiveB = atoi(l_model_color_propriety->Attribute("B"));
+                                    const int emissiveR = atof(l_model_color_propriety->Attribute("R"));
+                                    const int emissiveG = atof(l_model_color_propriety->Attribute("G"));
+                                    const int emissiveB = atof(l_model_color_propriety->Attribute("B"));
 
                                     texAndColor->emissive[0] = emissiveR;
                                     texAndColor->emissive[1] = emissiveG;
                                     texAndColor->emissive[2] = emissiveB;
                                 }
                                 else{
-                                    int shininess = atoi(l_model_color_propriety->Attribute("value"));
-                                    texAndColor->shineness = shininess;
+                                    int shininess = atof(l_model_color_propriety->Attribute("value"));
+                                    texAndColor->shininess = shininess;
                                 }
 
                                 l_model_color_propriety = l_model_color_propriety->NextSiblingElement();
@@ -211,44 +211,41 @@ void xml_parse::readLights(TiXmlElement* l_lights){
         const char* light_type = l_light->Attribute("type");
 
         if(strcmp(light_type,"point") == 0){
-            float pointPosX = atoi(l_light->Attribute("posx"));
-            float pointPosY = atoi(l_light->Attribute("posy"));
-            float pointPosZ = atoi(l_light->Attribute("posz"));
 
-            lights->point[0] = pointPosX;
-            lights->point[1] = pointPosY;
-            lights->point[2] = pointPosZ;
+            LightPoint* l = (LightPoint*) malloc(sizeof(struct LightPoint));
+
+            l->posX = atoi(l_light->Attribute("posx"));
+            l->posY = atoi(l_light->Attribute("posy"));
+            l->posZ = atoi(l_light->Attribute("posz"));
+
+            lightsPoint.push_back(l);
 
         }
         else if(strcmp(light_type,"directional") == 0){
-            float directionalDirX = atof(l_light->Attribute("dirx"));
-            float directionalDirY = atof(l_light->Attribute("diry"));
-            float directionalDirZ = atof(l_light->Attribute("dirz"));
 
-            lights->directional[0] = directionalDirX;
-            lights->directional[1] = directionalDirY;
-            lights->directional[2] = directionalDirZ;
+            LightDirectional* l = (LightDirectional*) malloc(sizeof(struct LightDirectional));
+
+            l->dirX = atof(l_light->Attribute("dirx"));
+            l->dirY = atof(l_light->Attribute("diry"));
+            l->dirZ = atof(l_light->Attribute("dirz"));
+
+            lightsDirectional.push_back(l);
         }
         else {
-            float spotlightPosX = atoi(l_light->Attribute("posx"));
-            float spotlightPosY = atoi(l_light->Attribute("posy"));
-            float spotlightPosZ = atoi(l_light->Attribute("posz"));
 
-            float spotlightDirX = atoi(l_light->Attribute("dirx"));
-            float spotlightDirY = atoi(l_light->Attribute("diry"));
-            float spotlightDirZ = atoi(l_light->Attribute("dirz"));
+            LightSpotlight* l = (LightSpotlight*) malloc(sizeof(struct LightSpotlight));
 
-            float spotlightCutOff = atoi(l_light->Attribute("cutoff"));
+            l->posX = atoi(l_light->Attribute("posx"));
+            l->posY = atoi(l_light->Attribute("posy"));
+            l->posZ = atoi(l_light->Attribute("posz"));
 
-            lights->spotlight[0] = spotlightPosX;
-            lights->spotlight[1] = spotlightPosY;
-            lights->spotlight[2] = spotlightPosZ;
+            l->dirX = atoi(l_light->Attribute("dirx"));
+            l->dirX = atoi(l_light->Attribute("diry"));
+            l->dirX = atoi(l_light->Attribute("dirz"));
 
-            lights->spotlight[3] = spotlightDirX;
-            lights->spotlight[4] = spotlightDirY;
-            lights->spotlight[5] = spotlightDirZ;
+            l->cutoff = atoi(l_light->Attribute("cutoff"));
 
-            lights->spotlight[6] = spotlightCutOff;
+            lightsSpotlight.push_back(l);
         }
 
         l_light = l_light->NextSiblingElement();
