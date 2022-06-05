@@ -211,10 +211,10 @@ void processKeys(unsigned char c, int xx, int yy) {
             look[2] -= yVec[2]*stride;
             break;
         case 'u':
-            radius += 1;
+            radius += 10;
             break;
         case 'j':
-            radius -= 1;
+            radius -= 10;
             break;
     }
     spherical2Cartesian();
