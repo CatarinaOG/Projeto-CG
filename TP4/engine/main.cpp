@@ -653,11 +653,12 @@ void draw() {
                 int indFile;
                 int indText;
 
-                printf("size: %d\n",texturesRead.size());
 
                 for (int j = 0; j < filesRead.size(); j++) {
                     if (strcmp(xmlParse->models[modelInd], filesRead[j]) == 0) {
                         indFile = j;
+                        printf("indFile: %d | file: %s\n",j,filesRead[j]);
+
                         existsFile = true;
                     }
                 }
@@ -665,6 +666,7 @@ void draw() {
                 for (int j = 0; j < texturesRead.size(); j++) {
                     if (strcmp(xmlParse->modelsTexAndColors[modelInd]->texFile, texturesRead[j]) == 0) {
                         indText = j;
+                        printf("indTx: %d | texFile: %s\n",j,texturesRead[j]);
                         existsTexture = true;
                     }
                 }
@@ -681,7 +683,8 @@ void draw() {
                     drawPrimitive(indFile,modelInd);
 
                 }else if(!existsFile && existsTexture ){
-                    texturesRead.push_back((char *) xmlParse->modelsTexAndColors[modelInd]->texFile);
+                    filesRead.push_back((char *) xmlParse->models[modelInd]);
+                    parser(xmlParse->models[modelInd], modelInd);
                     drawPrimitive(filesRead.size() - 1,indText);
 
                 }else{
