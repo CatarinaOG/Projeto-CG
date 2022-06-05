@@ -658,6 +658,26 @@ float* getTexPointsCone(int slice, int stack, int cone_stacks, int cone_slices, 
     return ret;
 }
 
+void calculateNormals(float a[3], float c[3], float d[3], float b[3], float normal[3]){
+    float bd[3];
+    float ba[3];
+    float bc[3];
+    float n1[3];
+    float n2[3];
+    calculateVec(d, b, bd);
+    calculateVec(a, b, ba);
+    calculateVec(c, b, bc);
+    cross(bd, ba, n1);
+    cross(ba, bc, n2);
+    normalize(n1);
+    normalize(n2);
+    normal[0] = n1[0] + n2[0];
+    normal[1] = n1[1] + n2[1];
+    normal[2] = n1[2] + n2[2];
+    normalize(normal);
+}
+
+
 void writeCone(float radius, float height, int cone_slices, int cone_stacks, char* fileName) {
     float px_top = 0,
         px_bottom = 0,
@@ -698,33 +718,50 @@ void writeCone(float radius, float height, int cone_slices, int cone_stacks, cha
     for (int j = 0; j < cone_slices; j++) {
 
         tmp_angle_bottom = angle_bottom;
-        /*  coordenadas do C */
-        float x_C = bottom_radius * sin(tmp_angle_bottom);
-        float z_C = bottom_radius * cos(tmp_angle_bottom);
-
-        tmp_angle_bottom -= angle_step;
-
-        /* coordendas do A */
+        /*  coordenadas do A */
         float x_A = bottom_radius * sin(tmp_angle_bottom);
         float z_A = bottom_radius * cos(tmp_angle_bottom);
+
+        tmp_angle_bottom += angle_step;
+
+        /* coordendas do C */
+        float x_C = bottom_radius * sin(tmp_angle_bottom);
+        float z_C = bottom_radius * cos(tmp_angle_bottom);
 
         /* coordenadas de B */
         float h_B = height;
 
+        /* coordendas do D */
+        float x_D = bottom_radius * sin(tmp_angle_bottom - 2*angle_step);
+        float z_D = bottom_radius * cos(tmp_angle_bottom - 2*angle_step);
+
+        float x_E = bottom_radius * sin(tmp_angle_bottom + angle_step);
+        float z_E = bottom_radius * cos(tmp_angle_bottom + angle_step);
 
         /* calculo dos vetores e da normal */
 
 
-        float a[3] = {x_A, 0, z_A};
-        float b[3] = {0, h_B, 0};
         float c[3] = {x_C, 0, z_C};
+        float b[3] = {0, h_B, 0};
+        float a[3] = {x_A, 0, z_A};
+        float d[3] = {x_D, 0, z_D};
+        float e[3] = {x_E, 0, z_E};
+
+        float normal_left[3];
+        calculateNormals(a, c, d, b, normal_left);
+        normalize(normal_left);
+        float normal_right[3];
+        calculateNormals(c, e, a, b, normal_right);
+        normalize(normal_right);
+
+        /*
         float baVec[3];
         float bcVec[3];
         float normal[3];
         calculateVec(a, b, baVec);
         calculateVec(c, b, bcVec);
         cross(baVec, bcVec, normal);
-
+        */
         for (int i = 0; i < cone_stacks; i++) {
 
             float* getPoints = getTexPointsCone(i, j, cone_stacks, cone_slices, points);
@@ -742,9 +779,9 @@ void writeCone(float radius, float height, int cone_slices, int cone_stacks, cha
 
             /* normais dos vértices*/
 
-            MyFile <<  normal[0] << ";" << normal[1] << ";" << normal[2] << ";";
-            MyFile <<  normal[0] << ";" << normal[1] << ";" << normal[2] << ";";
-            MyFile <<  normal[0] << ";" << normal[1] << ";" << normal[2] << ";" << std::endl;
+            MyFile <<  normal_right[0] << ";" << normal_right[1] << ";" << normal_right[2] << ";";
+            MyFile <<  normal_right[0] << ";" << normal_right[1] << ";" << normal_right[2] << ";";
+            MyFile <<  normal_left[0] << ";" << normal_left[1] << ";" << normal_left[2] << ";" << std::endl;
 
             /* coordenadas dos vertices */
             MyFile << px_bottom << ";" << i * stack_height << ";" << pz_bottom << ";";
@@ -771,9 +808,9 @@ void writeCone(float radius, float height, int cone_slices, int cone_stacks, cha
 
             /* normais dos vértices*/
 
-            MyFile <<  normal[0] << ";" << normal[1] << ";" << normal[2] << ";";
-            MyFile <<  normal[0] << ";" << normal[1] << ";" << normal[2] << ";";
-            MyFile <<  normal[0] << ";" << normal[1] << ";" << normal[2] << ";" << std::endl;
+            MyFile <<  normal_left[0] << ";" << normal_left[1] << ";" << normal_left[2] << ";";
+            MyFile <<  normal_right[0] << ";" << normal_right[1] << ";" << normal_right[2] << ";";
+            MyFile <<  normal_left[0] << ";" << normal_left[1] << ";" << normal_left[2] << ";" << std::endl;
 
             /* coordenadas dos vertices */
             MyFile << px_bottom << ";" << i * stack_height << ";" << pz_bottom << ";";
@@ -857,15 +894,23 @@ void writeSphere(float radius, int slices, int stacks, char* filename) {
             vertex v3 = assignCoords(radius, currStack + 1, currSlice + 1, i_beta, d_beta, d_alpha);
             vertex v4 = assignCoords(radius, currStack, currSlice + 1, i_beta, d_beta, d_alpha);
 
+
             float ver1[3] = {v1.x, v1.y, v1.z};
             float ver2[3] = {v2.x, v2.y, v2.z};
             float ver3[3] = {v3.x, v3.y, v3.z};
             float ver4[3] = {v4.x, v4.y, v4.z};
 
-            float vector1[3] = {sin(currStack*d_beta)*cos(currSlice*d_alpha), cos(currStack*d_beta), sin(currStack*d_beta)*sin(currSlice*d_alpha)};
-            float vector2[3] = {sin((currStack+1)*d_beta)*cos(currSlice*d_alpha), cos((currStack+1)*d_beta), sin((currStack+1)*d_beta)*sin(currSlice*d_alpha)};
-            float vector3[3] = {sin((currStack+1)*d_beta)*cos((currSlice+1)*d_alpha), cos((currStack+1)*d_beta), sin((currStack+1)*d_beta)*sin((currSlice+1)*d_alpha)};
-            float vector4[3] = {sin(currStack*d_beta)*cos((currSlice+1)*d_alpha), cos(currStack*d_beta), sin(currStack*d_beta)*sin((currSlice+1)*d_alpha)};
+
+
+            float vector1[3];
+            float vector2[3];
+            float vector3[3];
+            float vector4[3];
+
+            calculateVec(ver1, center, vector1);
+            calculateVec(ver2, center, vector2);
+            calculateVec(ver3, center, vector3);
+            calculateVec(ver4, center, vector4);
 
             normalize(vector1);
             normalize(vector2);

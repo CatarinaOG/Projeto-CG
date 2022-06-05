@@ -148,36 +148,36 @@ void  xml_parse::readTransformations(TiXmlElement* l_group){
                             while(l_model_color_propriety != NULL){
 
                                 if (strcmp(l_model_color_propriety->Value(), "diffuse") == 0){
-                                    const int diffuseR = atof(l_model_color_propriety->Attribute("R"));
-                                    const int diffuseG = atof(l_model_color_propriety->Attribute("G"));
-                                    const int diffuseB = atof(l_model_color_propriety->Attribute("B"));
+                                    const int diffuseR = atoi(l_model_color_propriety->Attribute("R"));
+                                    const int diffuseG = atoi(l_model_color_propriety->Attribute("G"));
+                                    const int diffuseB = atoi(l_model_color_propriety->Attribute("B"));
 
                                     texAndColor->diffuse[0] = diffuseR;
                                     texAndColor->diffuse[1] = diffuseG;
                                     texAndColor->diffuse[2] = diffuseB;
                                 }
                                 else if (strcmp(l_model_color_propriety->Value(), "ambient") == 0) {
-                                    const int ambientR = atof(l_model_color_propriety->Attribute("R"));
-                                    const int ambientG = atof(l_model_color_propriety->Attribute("G"));
-                                    const int ambientB = atof(l_model_color_propriety->Attribute("B"));
+                                    const int ambientR = atoi(l_model_color_propriety->Attribute("R"));
+                                    const int ambientG = atoi(l_model_color_propriety->Attribute("G"));
+                                    const int ambientB = atoi(l_model_color_propriety->Attribute("B"));
 
                                     texAndColor->ambient[0] = ambientR;
                                     texAndColor->ambient[1] = ambientG;
                                     texAndColor->ambient[2] = ambientB;
                                 }
                                 else if (strcmp(l_model_color_propriety->Value(), "specular") == 0){
-                                    const int specularR = atof(l_model_color_propriety->Attribute("R"));
-                                    const int specularG = atof(l_model_color_propriety->Attribute("G"));
-                                    const int specularB = atof(l_model_color_propriety->Attribute("B"));
+                                    const int specularR = atoi(l_model_color_propriety->Attribute("R"));
+                                    const int specularG = atoi(l_model_color_propriety->Attribute("G"));
+                                    const int specularB = atoi(l_model_color_propriety->Attribute("B"));
 
                                     texAndColor->specular[0] = specularR;
                                     texAndColor->specular[1] = specularG;
                                     texAndColor->specular[2] = specularB;
                                 }
                                 else if (strcmp(l_model_color_propriety->Value(), "emissive") == 0) {
-                                    const int emissiveR = atof(l_model_color_propriety->Attribute("R"));
-                                    const int emissiveG = atof(l_model_color_propriety->Attribute("G"));
-                                    const int emissiveB = atof(l_model_color_propriety->Attribute("B"));
+                                    const int emissiveR = atoi(l_model_color_propriety->Attribute("R"));
+                                    const int emissiveG = atoi(l_model_color_propriety->Attribute("G"));
+                                    const int emissiveB = atoi(l_model_color_propriety->Attribute("B"));
 
                                     texAndColor->emissive[0] = emissiveR;
                                     texAndColor->emissive[1] = emissiveG;
@@ -214,9 +214,9 @@ void xml_parse::readLights(TiXmlElement* l_lights){
 
             LightPoint* l = (LightPoint*) malloc(sizeof(struct LightPoint));
 
-            l->posX = atoi(l_light->Attribute("posx"));
-            l->posY = atoi(l_light->Attribute("posy"));
-            l->posZ = atoi(l_light->Attribute("posz"));
+            l->posX = atof(l_light->Attribute("posx"));
+            l->posY = atof(l_light->Attribute("posy"));
+            l->posZ = atof(l_light->Attribute("posz"));
 
             lightsPoint.push_back(l);
 
@@ -235,13 +235,13 @@ void xml_parse::readLights(TiXmlElement* l_lights){
 
             LightSpotlight* l = (LightSpotlight*) malloc(sizeof(struct LightSpotlight));
 
-            l->posX = atoi(l_light->Attribute("posx"));
-            l->posY = atoi(l_light->Attribute("posy"));
-            l->posZ = atoi(l_light->Attribute("posz"));
+            l->posX = atof(l_light->Attribute("posx"));
+            l->posY = atof(l_light->Attribute("posy"));
+            l->posZ = atof(l_light->Attribute("posz"));
 
-            l->dirX = atoi(l_light->Attribute("dirx"));
-            l->dirX = atoi(l_light->Attribute("diry"));
-            l->dirX = atoi(l_light->Attribute("dirz"));
+            l->dirX = atof(l_light->Attribute("dirx"));
+            l->dirX = atof(l_light->Attribute("diry"));
+            l->dirX = atof(l_light->Attribute("dirz"));
 
             l->cutoff = atoi(l_light->Attribute("cutoff"));
 

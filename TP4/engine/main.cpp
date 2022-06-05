@@ -211,10 +211,10 @@ void processKeys(unsigned char c, int xx, int yy) {
             look[2] -= yVec[2]*stride;
             break;
         case 'u':
-            radius += 10;
+            radius += 1;
             break;
         case 'j':
-            radius -= 10;
+            radius -= 1;
             break;
     }
     spherical2Cartesian();
@@ -662,13 +662,17 @@ void draw() {
                         existsFile = true;
                     }
                 }
-
-                for (int j = 0; j < texturesRead.size(); j++) {
-                    if (strcmp(xmlParse->modelsTexAndColors[modelInd]->texFile, texturesRead[j]) == 0) {
-                        indText = j;
-                        printf("indTx: %d | texFile: %s\n",j,texturesRead[j]);
-                        existsTexture = true;
+                if(xmlParse->modelsTexAndColors[modelInd]->texFile != NULL) {
+                    for (int j = 0; j < texturesRead.size(); j++) {
+                        if (strcmp(xmlParse->modelsTexAndColors[modelInd]->texFile, texturesRead[j]) == 0) {
+                            indText = j;
+                            printf("indTx: %d | texFile: %s\n", j, texturesRead[j]);
+                            existsTexture = true;
+                        }
                     }
+                }
+                else{
+                    existsTexture = false;
                 }
 
                 if (!existsFile && !existsTexture) {
@@ -678,10 +682,11 @@ void draw() {
                     drawPrimitive(filesRead.size() - 1,texturesRead.size()-1);
                 }
                 else if(existsFile && !existsTexture){
-                    texturesRead.push_back((char *) xmlParse->modelsTexAndColors[modelInd]->texFile);
-                    textIds[modelInd] = loadTex(xmlParse->modelsTexAndColors[modelInd]->texFile);
+                    if(xmlParse->modelsTexAndColors[modelInd]->texFile != NULL){
+                        texturesRead.push_back((char *) xmlParse->modelsTexAndColors[modelInd]->texFile);
+                        textIds[modelInd] = loadTex(xmlParse->modelsTexAndColors[modelInd]->texFile);
+                    }
                     drawPrimitive(indFile,modelInd);
-
                 }else if(!existsFile && existsTexture ){
                     filesRead.push_back((char *) xmlParse->models[modelInd]);
                     parser(xmlParse->models[modelInd], modelInd);
@@ -777,30 +782,9 @@ void renderScene(void) {
 
     glEnd();
 
-/*    glTranslatef(2,2,-2);
-    glutSolidSphere(0.5, 10, 10);
-    glTranslatef(-2,-2,2);
-
-    glTranslatef(-2,2,2);
-    glutSolidSphere(0.5, 10, 10);
-    glTranslatef(2,-2,-2);*/
-
-    float dark[] = { 0.2, 0.2, 0.2, 1.0 };
-    float white[] = { 0.8, 0.8, 0.8, 1.0 };
-    float red[] = { 0.8, 0.2, 0.2, 1.0 };
-    float yellow[] = {1,1,0,0};
 
     draw();
 
-
-
-/*
-    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, red);
-    glMaterialfv(GL_FRONT, GL_SPECULAR, white);
-    glMaterialf(GL_FRONT, GL_SHININESS, 128);
-
-    glutSolidSphere(1, 500, 500);
-*/
 
     // End of frame
     glutSwapBuffers();
