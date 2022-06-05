@@ -309,6 +309,6 @@ void xml_parse::readXML(char* filename) {
         }
     }
     else {
-        printf("Ficheiro nao carregado");
+        printf("Ficheiro nao carregado: %s", filename);
     }
 }

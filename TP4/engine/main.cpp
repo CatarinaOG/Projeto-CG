@@ -29,7 +29,7 @@ float* r = (float*) malloc(sizeof(float)*3);
 
 float camX = 0, camY = 0, camZ = 30;
 double alpha = 0.0f, beta = 0.0f, radius = 30.0f;
-float angle_step = 0.5f;
+float angle_step = 0.05f;
 
 xml_parse* xmlParse = new xml_parse();
 char* filename;
@@ -43,7 +43,9 @@ vector<vertex> vertices;
 vector< TiXmlElement*> groupStack;
 
 vector<char*> filesRead;
+vector<char*> texturesRead;
 vector<const char*> models;
+vector<const char*> textures;
 vector<vector<vertex> > v_matrix;
 
 vector<float> planetsPos;
@@ -287,8 +289,6 @@ void tokenize(std::string const& str, const char delim,std::vector<std::string>&
 }
 
 
-
-
 /*-----------------Carregamento das luzes------------------ */
 void loadLights() {
 
@@ -316,7 +316,7 @@ void loadLights() {
         dir[0] = xmlParse->lightsDirectional[i]->dirX;
         dir[1] = xmlParse->lightsDirectional[i]->dirY;
         dir[2] = xmlParse->lightsDirectional[i]->dirZ;
-        dir[3] = 1;
+        dir[3] = 0;
         glLightfv(GL_LIGHT0 + n_light, GL_SPOT_DIRECTION, dir);
         n_light++;
     }
@@ -346,35 +346,43 @@ void loadLights() {
 }
 
 /*-----------------Carregamento das cores------------------ */
-void loadColors(int fileIndex){
+void loadColors(int textInd){
 
     //printf("%d\n", fileIndex);
 
     /* Ambiente */
     float ambient_color[3];
-    ambient_color[0] = xmlParse->modelsTexAndColors[fileIndex]->ambient[0]/255.0f;
-    ambient_color[1] = xmlParse->modelsTexAndColors[fileIndex]->ambient[1]/255.0f;
-    ambient_color[2] = xmlParse->modelsTexAndColors[fileIndex]->ambient[2]/255.0f;
+    ambient_color[0] = xmlParse->modelsTexAndColors[textInd]->ambient[0]/255.0f;
+    ambient_color[1] = xmlParse->modelsTexAndColors[textInd]->ambient[1]/255.0f;
+    ambient_color[2] = xmlParse->modelsTexAndColors[textInd]->ambient[2]/255.0f;
     glMaterialfv(GL_FRONT, GL_AMBIENT, ambient_color);
 
     /* Difusa */
     float diffuse_color[3];
-    diffuse_color[0] = xmlParse->modelsTexAndColors[fileIndex]->diffuse[0]/255.0f;
-    diffuse_color[1] = xmlParse->modelsTexAndColors[fileIndex]->diffuse[1]/255.0f;
-    diffuse_color[2] = xmlParse->modelsTexAndColors[fileIndex]->diffuse[2]/255.0f;
+    diffuse_color[0] = xmlParse->modelsTexAndColors[textInd]->diffuse[0]/255.0f;
+    diffuse_color[1] = xmlParse->modelsTexAndColors[textInd]->diffuse[1]/255.0f;
+    diffuse_color[2] = xmlParse->modelsTexAndColors[textInd]->diffuse[2]/255.0f;
     glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuse_color);
     //printf("%f | %f | %f\n", diffuse_color[0], diffuse_color[1], diffuse_color[2]);
 
     /* Especular */
     float specular_color[3];
-    specular_color[0] = xmlParse->modelsTexAndColors[fileIndex]->specular[0]/255.0f;
-    specular_color[1] = xmlParse->modelsTexAndColors[fileIndex]->specular[1]/255.0f;
-    specular_color[2] = xmlParse->modelsTexAndColors[fileIndex]->specular[2]/255.0f;
+    specular_color[0] = xmlParse->modelsTexAndColors[textInd]->specular[0]/255.0f;
+    specular_color[1] = xmlParse->modelsTexAndColors[textInd]->specular[1]/255.0f;
+    specular_color[2] = xmlParse->modelsTexAndColors[textInd]->specular[2]/255.0f;
     glMaterialfv(GL_FRONT, GL_SPECULAR,specular_color);
+
+    /* Emissiva */
+    float emissive_color[3];
+    emissive_color[0] = xmlParse->modelsTexAndColors[textInd]->emissive[0]/255.0f;
+    emissive_color[1] = xmlParse->modelsTexAndColors[textInd]->emissive[1]/255.0f;
+    emissive_color[2] = xmlParse->modelsTexAndColors[textInd]->emissive[2]/255.0f;
+    glMaterialfv(GL_FRONT, GL_EMISSION,emissive_color);
+
 
     /* Shininess */
     //printf("Shininess%f\n", xmlParse->modelsTexAndColors[fileIndex]->shininess);
-    glMaterialf(GL_FRONT, GL_SHININESS, xmlParse->modelsTexAndColors[fileIndex]->shininess);
+    glMaterialf(GL_FRONT, GL_SHININESS, xmlParse->modelsTexAndColors[textInd]->shininess);
 }
 
 /*--------------------Retorna id da Textura--------------------*/
@@ -404,7 +412,7 @@ int loadTex(std::string s){
 }
 
 /*----------------------Parser do Ficheiros .3d --------------------*/
-void parser(const char* filename) {
+void parser(const char* filename, int modelInd) {
 
     string line;
     ifstream myfile(filename);
@@ -423,7 +431,7 @@ void parser(const char* filename) {
 
         myfile.close();
     }
-    else cout << "Unable to open file";
+    else cout << "Unable to open file " << filename << "\n";
 
 
     /* Guarda as 6 coordenadas de textura
@@ -447,9 +455,9 @@ void parser(const char* filename) {
     glVertexPointer(3, GL_FLOAT, 0, 0);
     glBufferData(GL_ARRAY_BUFFER, tmp.size()*sizeof(float), tmp.data(), GL_STATIC_DRAW);
 
-    if(xmlParse->modelsTexAndColors[filesRead.size()-1]->texFile != NULL) {
+    if(xmlParse->modelsTexAndColors[modelInd]->texFile != NULL) {
         /* Guarda o id do modelo atual */
-        textIds[filesRead.size() - 1] = loadTex(xmlParse->modelsTexAndColors[filesRead.size() - 1]->texFile);
+        textIds[modelInd] = loadTex(xmlParse->modelsTexAndColors[modelInd]->texFile);
 
         /* Bind buffer com coordendas de texturas */
         glBindBuffer(GL_ARRAY_BUFFER, texBuffer[filesRead.size() - 1]);
@@ -470,13 +478,13 @@ void parser(const char* filename) {
 }
 
 
-void drawPrimitive(int fileIndex){
+void drawPrimitive(int fileIndex, int textIndex){
 
-    loadColors(fileIndex);
+    loadColors(textIndex);
 
     /* Carregar textura */
-    if (xmlParse->modelsTexAndColors[fileIndex]->texFile != NULL)
-        glBindTexture(GL_TEXTURE_2D, textIds[fileIndex]);
+    if (xmlParse->modelsTexAndColors[textIndex]->texFile != NULL)
+        glBindTexture(GL_TEXTURE_2D, textIds[textIndex]);
 
     /* Carregar vertices */
     glBindBuffer(GL_ARRAY_BUFFER, buffers[fileIndex]);
@@ -602,7 +610,9 @@ void draw() {
     countCurves = 0;
     countRotate = 0;
     current_index = 0;
-    bool exists;
+    bool existsFile;
+    bool existsTexture;
+
     int n_points;
 
 
@@ -637,18 +647,45 @@ void draw() {
                 break;
 
             case 6:
-                exists = false;
+
+                existsFile = false;
+                existsTexture = false;
+                int indFile;
+                int indText;
+
+                printf("size: %d\n",texturesRead.size());
+
                 for (int j = 0; j < filesRead.size(); j++) {
                     if (strcmp(xmlParse->models[modelInd], filesRead[j]) == 0) {
-                        drawPrimitive(j);
-                        exists = true;
+                        indFile = j;
+                        existsFile = true;
                     }
                 }
-                if (!exists) {
 
+                for (int j = 0; j < texturesRead.size(); j++) {
+                    if (strcmp(xmlParse->modelsTexAndColors[modelInd]->texFile, texturesRead[j]) == 0) {
+                        indText = j;
+                        existsTexture = true;
+                    }
+                }
+
+                if (!existsFile && !existsTexture) {
                     filesRead.push_back((char *) xmlParse->models[modelInd]);
-                    parser(xmlParse->models[modelInd]);
-                    drawPrimitive(filesRead.size() - 1);
+                    texturesRead.push_back((char *) xmlParse->modelsTexAndColors[modelInd]->texFile);
+                    parser(xmlParse->models[modelInd], modelInd);
+                    drawPrimitive(filesRead.size() - 1,texturesRead.size()-1);
+                }
+                else if(existsFile && !existsTexture){
+                    texturesRead.push_back((char *) xmlParse->modelsTexAndColors[modelInd]->texFile);
+                    textIds[modelInd] = loadTex(xmlParse->modelsTexAndColors[modelInd]->texFile);
+                    drawPrimitive(indFile,modelInd);
+
+                }else if(!existsFile && existsTexture ){
+                    texturesRead.push_back((char *) xmlParse->modelsTexAndColors[modelInd]->texFile);
+                    drawPrimitive(filesRead.size() - 1,indText);
+
+                }else{
+                    drawPrimitive(indFile,indText);
                 }
                 modelInd++;
                 break;
@@ -737,9 +774,13 @@ void renderScene(void) {
 
     glEnd();
 
-    glTranslatef(25,25,25);
-    glutWireSphere(0.5, 10, 10);
-    glTranslatef(-25,-25,-25);
+/*    glTranslatef(2,2,-2);
+    glutSolidSphere(0.5, 10, 10);
+    glTranslatef(-2,-2,2);
+
+    glTranslatef(-2,2,2);
+    glutSolidSphere(0.5, 10, 10);
+    glTranslatef(2,-2,-2);*/
 
     float dark[] = { 0.2, 0.2, 0.2, 1.0 };
     float white[] = { 0.8, 0.8, 0.8, 1.0 };
@@ -755,13 +796,8 @@ void renderScene(void) {
     glMaterialfv(GL_FRONT, GL_SPECULAR, white);
     glMaterialf(GL_FRONT, GL_SHININESS, 128);
 
-
     glutSolidSphere(1, 500, 500);
 */
-
-
-
-
 
     // End of frame
     glutSwapBuffers();
@@ -775,6 +811,20 @@ void diferent_models(){
         }
         if(!exists){
             models.push_back(xmlParse->models.at(i));
+        }
+    }
+}
+
+void diferent_textures(){
+    for(int i = 0; i < xmlParse->modelsTexAndColors.size(); i++){
+        bool exists = false;
+        if(xmlParse->modelsTexAndColors[i]->texFile != NULL) {
+            for (int j = 0; j < textures.size() && !exists; j++) {
+                if (strcmp(textures.at(j), xmlParse->modelsTexAndColors[i]->texFile) == 0) exists = true;
+            }
+            if (!exists) {
+                textures.push_back(xmlParse->modelsTexAndColors[i]->texFile);
+            }
         }
     }
 }
@@ -819,6 +869,9 @@ void setUpCamera(){
             alpha = acos(1);
     else
         alpha = acos((aux_p[2] - camPos[2]) / cos(beta));
+    camX = camPos[0];
+    camY = camPos[1];
+    camZ = camPos[2];
 }
 
 int main(int argc, char** argv) {
@@ -839,6 +892,7 @@ int main(int argc, char** argv) {
     setUpCamera();
 
     diferent_models();
+    diferent_textures();
 
     GLuint aux[models.size()];
     GLuint auxTex[models.size()];
@@ -876,6 +930,7 @@ int main(int argc, char** argv) {
     glEnable(GL_CULL_FACE);
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_LIGHTING);
+    glEnable(GL_NORMALIZE);
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
     //enable lights
