@@ -243,7 +243,7 @@ void xml_parse::readLights(TiXmlElement* l_lights){
             l->dirX = atof(l_light->Attribute("diry"));
             l->dirX = atof(l_light->Attribute("dirz"));
 
-            l->cutoff = atoi(l_light->Attribute("cutoff"));
+            l->cutoff = atof(l_light->Attribute("cutoff"));
 
             lightsSpotlight.push_back(l);
         }

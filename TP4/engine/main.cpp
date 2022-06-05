@@ -29,7 +29,7 @@ float* r = (float*) malloc(sizeof(float)*3);
 
 float camX = 0, camY = 0, camZ = 30;
 double alpha = 0.0f, beta = 0.0f, radius = 30.0f;
-float angle_step = 0.05f;
+float angle_step = 0.1f;
 
 xml_parse* xmlParse = new xml_parse();
 char* filename;
@@ -85,7 +85,6 @@ bool showCurve = true;
 
 GLuint* textIds;
 
-/* variÃ¡veis globais texturas */
 
 
 void cross(float *a, float *b, float *res) {
@@ -211,10 +210,10 @@ void processKeys(unsigned char c, int xx, int yy) {
             look[2] -= yVec[2]*stride;
             break;
         case 'u':
-            radius += 1;
+            radius += 10;
             break;
         case 'j':
-            radius -= 1;
+            radius -= 10;
             break;
     }
     spherical2Cartesian();
@@ -226,37 +225,21 @@ void processSpecialKeys(int key, int xx, int yy){
     switch(key){
         case GLUT_KEY_RIGHT:
             alpha -= angle_step;
-            //look[0] = cos(beta)* sin(alpha);
-            //look[1] = sin(beta);
-            //look[2] = cos(beta) * cos(alpha);
-            //cameraOrientarionNewAxis();
             break;
         case GLUT_KEY_LEFT:
             alpha += angle_step;
-            //look[0] = cos(beta)* sin(alpha);
-            //look[1] = sin(beta);
-            //look[2] = cos(beta) * cos(alpha);
-            //cameraOrientarionNewAxis();
 
             break;
         case GLUT_KEY_UP:
             beta += angle_step;
             if (beta > 1.5f)
                 beta = 1.5f;
-            //look[0] = cos(beta)* sin(alpha);
-            //look[1] = sin(beta);
-            //look[2] = cos(beta) * cos(alpha);
-            //cameraOrientarionNewAxis();
             break;
 
         case GLUT_KEY_DOWN:
             beta -= angle_step;
             if (beta < -1.5f)
                 beta = -1.5f;
-            //look[0] = cos(beta)* sin(alpha);
-            //look[1] = sin(beta);
-            //look[2] = cos(beta) * cos(alpha);
-            //cameraOrientarionNewAxis();
             break;
     }
     spherical2Cartesian();
@@ -332,15 +315,15 @@ void loadLights() {
 
         float dir[4];
         dir[0] = xmlParse->lightsSpotlight[i]->dirX;
-        dir[1] = xmlParse->lightsSpotlight[i]->dirX;;
+        dir[1] = xmlParse->lightsSpotlight[i]->dirY;
         dir[2] = xmlParse->lightsSpotlight[i]->dirZ;
         dir[3] = 1;
 
-        float cutoff = xmlParse->lightsSpotlight[i]->cutoff;
+        float cutoff[1] = {xmlParse->lightsSpotlight[i]->cutoff};
 
         glLightfv(GL_LIGHT0 + n_light, GL_POSITION, pos);
         glLightfv(GL_LIGHT0 + n_light, GL_SPOT_DIRECTION, dir);
-        glLightfv(GL_LIGHT0 + n_light, GL_SPOT_CUTOFF, &cutoff);
+        glLightfv(GL_LIGHT0 + n_light, GL_SPOT_CUTOFF, cutoff);
         n_light++;
     }
 }
